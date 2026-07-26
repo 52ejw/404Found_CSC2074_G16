@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// Storage rules for 404Found (CampusFind) post and profile images.
+// Paths are namespaced by owner id (see StorageService) so ownership can be
+// checked from the path alone, without a Firestore lookup.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /posts/{ownerId}/{postId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == ownerId && isValidImage();
+      allow delete: if isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    match /profiles/{userId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId && isValidImage();
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// Security rules for 404Found (CampusFind). Mirrors the ownership and
+// authentication rules in blueprint section 6.3 / NFR06-NFR07:
+//   - Only authenticated users may create posts, send messages or claims.
+//   - Only the post owner may edit/delete a post.
+//   - Only conversation participants may read/write its messages.
+//   - Only the finder/claimant on a claim may read or resolve it.
+//   - Users may read/update only their own notifications and profile.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      // Profiles are readable by any signed-in user (post cards show owner
+      // name/photo) but only the owner may create or edit their own doc.
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /matches/{matchId} {
+      // Match suggestions are computed by the matching service (Backend
+      // Developer 2) from both posts' owners' perspective; any signed-in
+      // user may read/write while the matching flow doesn't run behind a
+      // privileged backend. Tighten to the two posts' owners once that
+      // flow is finalised.
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /claims/{claimId} {
+      allow read, update: if isSignedIn()
+        && (resource.data.claimantId == request.auth.uid || resource.data.finderId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.claimantId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      allow read, update: if isSignedIn() && request.auth.uid in resource.data.participantIds;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participantIds;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function conversation() {
+          return get(/databases/$(database)/documents/conversations/$(conversationId)).data;
+        }
+
+        allow read, update: if isSignedIn() && request.auth.uid in conversation().participantIds;
+        allow create: if isSignedIn()
+          && request.auth.uid in conversation().participantIds
+          && request.resource.data.senderId == request.auth.uid;
+        allow delete: if false;
+      }
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn();
+      allow delete: if false;
+    }
+  }
+}
