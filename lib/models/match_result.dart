@@ -12,6 +12,13 @@ class MatchResult {
   final String id;
   final String lostPostId;
   final String foundPostId;
+
+  /// Owner ids of the two posts, denormalized at creation time so
+  /// [MatchRepository.watchMatchesForUser] can query matches directly
+  /// without joining against `posts` (same rationale as
+  /// [ItemPost.searchKeywords] / [Conversation.unreadCounts]).
+  final String lostPostOwnerId;
+  final String foundPostOwnerId;
   final double categoryScore;
   final double keywordScore;
   final double locationScore;
@@ -24,6 +31,8 @@ class MatchResult {
     required this.id,
     required this.lostPostId,
     required this.foundPostId,
+    required this.lostPostOwnerId,
+    required this.foundPostOwnerId,
     required this.categoryScore,
     required this.keywordScore,
     required this.locationScore,
@@ -38,6 +47,8 @@ class MatchResult {
       id: id,
       lostPostId: map['lostPostId'] as String? ?? '',
       foundPostId: map['foundPostId'] as String? ?? '',
+      lostPostOwnerId: map['lostPostOwnerId'] as String? ?? '',
+      foundPostOwnerId: map['foundPostOwnerId'] as String? ?? '',
       categoryScore: (map['categoryScore'] as num?)?.toDouble() ?? 0,
       keywordScore: (map['keywordScore'] as num?)?.toDouble() ?? 0,
       locationScore: (map['locationScore'] as num?)?.toDouble() ?? 0,
@@ -56,6 +67,8 @@ class MatchResult {
     return {
       'lostPostId': lostPostId,
       'foundPostId': foundPostId,
+      'lostPostOwnerId': lostPostOwnerId,
+      'foundPostOwnerId': foundPostOwnerId,
       'categoryScore': categoryScore,
       'keywordScore': keywordScore,
       'locationScore': locationScore,
