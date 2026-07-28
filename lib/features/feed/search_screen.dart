@@ -8,9 +8,9 @@ import '../../core/widgets/state_views.dart';
 import '../../models/enums.dart';
 import '../../providers/feed_provider.dart';
 
-/// Focused search + filter + sort over the shared [FeedProvider] (FR06).
-/// Uses the same provider instance as the feed, so filters set here are
-/// reflected consistently.
+/// Advanced search + filter screen (RedNote/Trip style).
+/// Vertical collapsible filter panels: Type, Category, Date range, Sort.
+/// Results displayed below filters (FR06).
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -20,6 +20,12 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   late final TextEditingController _controller;
+  bool _expandType = false;
+  bool _expandCategory = false;
+  bool _expandDate = false;
+  bool _expandSort = false;
+
+  String? _selectedDateRange;
 
   @override
   void initState() {
@@ -37,6 +43,8 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final feed = context.watch<FeedProvider>();
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search'),
@@ -46,6 +54,7 @@ class _SearchScreenState extends State<SearchScreen> {
         top: false,
         child: Column(
           children: [
+            // Search input
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
@@ -69,99 +78,205 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
-            _TypeChips(feed: feed),
-            _CategoryChips(feed: feed),
-            _ResultsHeader(count: feed.posts.length),
-            Expanded(child: _Results(feed: feed)),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
-class _TypeChips extends StatelessWidget {
-  final FeedProvider feed;
-  const _TypeChips({required this.feed});
+            // Filter panels (scrollable, stacked vertically)
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppSpacing.sm),
 
-  @override
-  Widget build(BuildContext context) {
-    Widget chip(String label, PostType? value) => Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.sm),
-          child: ChoiceChip(
-            label: Text(label),
-            selected: feed.typeFilter == value,
-            onSelected: (_) => feed.setType(value),
-          ),
-        );
+                    // Type filter
+                    _FilterPanel(
+                      title: 'Type',
+                      isExpanded: _expandType,
+                      onExpandChanged: (v) =>
+                          setState(() => _expandType = v),
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          FilterChip(
+                            label: const Text('All'),
+                            selected: feed.typeFilter == null,
+                            onSelected: (_) => feed.setType(null),
+                          ),
+                          FilterChip(
+                            label: const Text('Lost'),
+                            selected: feed.typeFilter == PostType.lost,
+                            onSelected: (_) =>
+                                feed.setType(PostType.lost),
+                          ),
+                          FilterChip(
+                            label: const Text('Found'),
+                            selected: feed.typeFilter == PostType.found,
+                            onSelected: (_) =>
+                                feed.setType(PostType.found),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Wrap(
-          children: [
-            chip('All', null),
-            chip('Lost', PostType.lost),
-            chip('Found', PostType.found),
-          ],
-        ),
-      ),
-    );
-  }
-}
+                    // Category filter
+                    _FilterPanel(
+                      title: 'Category',
+                      isExpanded: _expandCategory,
+                      onExpandChanged: (v) =>
+                          setState(() => _expandCategory = v),
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          FilterChip(
+                            label: const Text('All'),
+                            selected: feed.category == null,
+                            onSelected: (_) => feed.setCategory(null),
+                          ),
+                          for (final cat in AppConstants.categories)
+                            FilterChip(
+                              label: Text(cat),
+                              selected: feed.category == cat,
+                              onSelected: (selected) =>
+                                  feed.setCategory(selected ? cat : null),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
 
-class _CategoryChips extends StatelessWidget {
-  final FeedProvider feed;
-  const _CategoryChips({required this.feed});
+                    // Date range filter
+                    _FilterPanel(
+                      title: 'Post time',
+                      isExpanded: _expandDate,
+                      onExpandChanged: (v) =>
+                          setState(() => _expandDate = v),
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          FilterChip(
+                            label: const Text('All'),
+                            selected: _selectedDateRange == null,
+                            onSelected: (_) =>
+                                setState(() => _selectedDateRange = null),
+                          ),
+                          FilterChip(
+                            label: const Text('Past 24 hours'),
+                            selected: _selectedDateRange == '1d',
+                            onSelected: (_) =>
+                                setState(() => _selectedDateRange = '1d'),
+                          ),
+                          FilterChip(
+                            label: const Text('Past week'),
+                            selected: _selectedDateRange == '7d',
+                            onSelected: (_) =>
+                                setState(() => _selectedDateRange = '7d'),
+                          ),
+                          FilterChip(
+                            label: const Text('Past month'),
+                            selected: _selectedDateRange == '30d',
+                            onSelected: (_) =>
+                                setState(() => _selectedDateRange = '30d'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
-      child: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.xs,
-        children: [
-          for (final category in AppConstants.categories)
-            FilterChip(
-              label: Text(category),
-              selected: feed.category == category,
-              onSelected: (selected) =>
-                  feed.setCategory(selected ? category : null),
+                    // Sort options
+                    _FilterPanel(
+                      title: 'Sort by',
+                      isExpanded: _expandSort,
+                      onExpandChanged: (v) =>
+                          setState(() => _expandSort = v),
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          FilterChip(
+                            label: const Text('Newest'),
+                            selected: true,
+                            onSelected: (_) {},
+                          ),
+                          FilterChip(
+                            label: const Text('Oldest'),
+                            selected: false,
+                            onSelected: (_) {},
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // Results header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${feed.posts.length} result${feed.posts.length == 1 ? '' : 's'}',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: theme.colorScheme.outline)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                ),
+              ),
             ),
-        ],
+
+            // Results list
+            Expanded(
+              child: _Results(feed: feed),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ResultsHeader extends StatelessWidget {
-  final int count;
-  const _ResultsHeader({required this.count});
+/// Collapsible filter section with expand/collapse icon
+class _FilterPanel extends StatelessWidget {
+  final String title;
+  final bool isExpanded;
+  final ValueChanged<bool> onExpandChanged;
+  final Widget child;
+
+  const _FilterPanel({
+    required this.title,
+    required this.isExpanded,
+    required this.onExpandChanged,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$count result${count == 1 ? '' : 's'}',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline)),
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => onExpandChanged(!isExpanded),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.swap_vert, size: 16),
-              const SizedBox(width: AppSpacing.xs),
-              Text('Newest', style: theme.textTheme.bodySmall),
+              Text(title,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w500)),
+              Icon(
+                isExpanded ? Icons.expand_less : Icons.expand_more,
+                color: theme.colorScheme.outline,
+              ),
             ],
           ),
+        ),
+        if (isExpanded) ...[
+          const SizedBox(height: AppSpacing.md),
+          child,
         ],
-      ),
+      ],
     );
   }
 }
@@ -186,7 +301,7 @@ class _Results extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       itemCount: feed.posts.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, i) => PostCard(post: feed.posts[i]),
     );
   }

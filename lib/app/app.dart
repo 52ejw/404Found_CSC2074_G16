@@ -1,7 +1,7 @@
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../features/app_shell/landing_screen.dart';
 import '../features/app_shell/main_shell.dart';
 import '../features/authentication/login_screen.dart';
 import '../features/authentication/splash_screen.dart';
@@ -17,7 +17,7 @@ import 'constants.dart';
 import 'theme.dart';
 
 /// Root widget. Wires the Provider layer over the repositories and hosts the
-/// auth gate that routes Splash → Login → Main App Shell (blueprint 4.1).
+/// auth gate that routes Splash → Login → Landing → Main App Shell (blueprint 4.1).
 ///
 /// Repositories are injectable so widget tests can supply fakes instead of
 /// touching Firebase (blueprint 5.2 — testability).
@@ -54,9 +54,6 @@ class App extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        useInheritedMediaQuery: true,
-        locale: DevicePreview.locale(context),
-        builder: DevicePreview.appBuilder,
         home: const _AuthGate(),
       ),
     );
@@ -64,19 +61,43 @@ class App extends StatelessWidget {
 }
 
 /// Watches [AuthProvider] and shows the right top-level screen for the
-/// current auth state.
-class _AuthGate extends StatelessWidget {
+/// current auth state. Routes: Splash → Login → Landing → Main App Shell.
+class _AuthGate extends StatefulWidget {
   const _AuthGate();
+
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  bool _hasSeenLanding = false;
 
   @override
   Widget build(BuildContext context) {
     final status = context.watch<AuthProvider>().status;
+
     switch (status) {
       case AuthStatus.unknown:
         return const SplashScreen();
+
       case AuthStatus.authenticated:
+        // After login, show landing screen once, then mainshell
+        if (!_hasSeenLanding) {
+          return LandingScreen(
+            onGetStarted: () {
+              setState(() => _hasSeenLanding = true);
+            },
+          );
+        }
         return const MainShell();
+
       case AuthStatus.unauthenticated:
+        // Reset landing screen flag when signed out
+        if (_hasSeenLanding) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() => _hasSeenLanding = false);
+          });
+        }
         return const LoginScreen();
     }
   }
