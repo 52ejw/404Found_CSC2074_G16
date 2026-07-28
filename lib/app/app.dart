@@ -1,7 +1,7 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../features/app_shell/landing_screen.dart';
 import '../features/app_shell/main_shell.dart';
 import '../features/authentication/login_screen.dart';
 import '../features/authentication/splash_screen.dart';
@@ -52,8 +52,15 @@ class App extends StatelessWidget {
       child: MaterialApp(
         title: AppConstants.displayName,
         debugShowCheckedModeBanner: false,
+        // DevicePreview hooks (no-ops in release builds).
+        locale: DevicePreview.locale(context),
+        builder: DevicePreview.appBuilder,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
+        // The screens are designed against the light palette (white cards,
+        // navy headers). Dark mode is kept as an optional enhancement in the
+        // blueprint, so pin the app to light until those styles are tuned.
+        themeMode: ThemeMode.light,
         home: const _AuthGate(),
       ),
     );
@@ -61,16 +68,13 @@ class App extends StatelessWidget {
 }
 
 /// Watches [AuthProvider] and shows the right top-level screen for the
-/// current auth state. Routes: Splash → Login → Landing → Main App Shell.
-class _AuthGate extends StatefulWidget {
+/// current auth state. Routes: Splash → Login → Main App Shell.
+///
+/// There is no separate landing page: after login the user lands straight on
+/// the home feed, where [MainShell] runs a step-by-step walkthrough of the
+/// navigation on first entry.
+class _AuthGate extends StatelessWidget {
   const _AuthGate();
-
-  @override
-  State<_AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<_AuthGate> {
-  bool _hasSeenLanding = false;
 
   @override
   Widget build(BuildContext context) {
@@ -81,23 +85,9 @@ class _AuthGateState extends State<_AuthGate> {
         return const SplashScreen();
 
       case AuthStatus.authenticated:
-        // After login, show landing screen once, then mainshell
-        if (!_hasSeenLanding) {
-          return LandingScreen(
-            onGetStarted: () {
-              setState(() => _hasSeenLanding = true);
-            },
-          );
-        }
         return const MainShell();
 
       case AuthStatus.unauthenticated:
-        // Reset landing screen flag when signed out
-        if (_hasSeenLanding) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() => _hasSeenLanding = false);
-          });
-        }
         return const LoginScreen();
     }
   }
