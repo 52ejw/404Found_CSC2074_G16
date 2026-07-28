@@ -1,88 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../features/app_shell/main_shell.dart';
+import '../features/authentication/login_screen.dart';
+import '../features/authentication/splash_screen.dart';
+import '../providers/auth_provider.dart';
+import '../providers/feed_provider.dart';
+import '../repositories/auth_repository.dart';
+import '../repositories/firebase_auth_repository.dart';
 import '../repositories/firestore_post_repository.dart';
+import '../repositories/firestore_user_repository.dart';
+import '../repositories/post_repository.dart';
+import '../repositories/user_repository.dart';
 import 'constants.dart';
 import 'theme.dart';
 
-/// Root widget. Kept deliberately minimal: routing/navigation and the
-/// Provider wiring are owned by Frontend Developer 1 (routes/design system)
-/// and Frontend Developer 2 (Provider → repository wiring) respectively —
-/// see blueprint section 8. This placeholder home screen exists only so the
-/// project compiles and runs end-to-end from a fresh clone before those
-/// pieces land.
+/// Root widget. Wires the Provider layer over the repositories and hosts the
+/// auth gate that routes Splash → Login → Main App Shell (blueprint 4.1).
+///
+/// Repositories are injectable so widget tests can supply fakes instead of
+/// touching Firebase (blueprint 5.2 — testability).
 class App extends StatelessWidget {
-  const App({super.key});
+  final AuthRepository authRepository;
+  final UserRepository userRepository;
+  final PostRepository postRepository;
+
+  App({
+    super.key,
+    AuthRepository? authRepository,
+    UserRepository? userRepository,
+    PostRepository? postRepository,
+  })  : authRepository = authRepository ?? FirebaseAuthRepository(),
+        userRepository = userRepository ?? FirestoreUserRepository(),
+        postRepository = postRepository ?? FirestorePostRepository();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      home: const _PlaceholderHome(),
-    );
-  }
-}
-
-class _PlaceholderHome extends StatefulWidget {
-  const _PlaceholderHome();
-
-  @override
-  State<_PlaceholderHome> createState() => _PlaceholderHomeState();
-}
-
-class _PlaceholderHomeState extends State<_PlaceholderHome> {
-  String _status = 'Checking Firebase connection...';
-
-  @override
-  void initState() {
-    super.initState();
-    _checkFirebaseConnection();
-  }
-
-  /// One-shot read against the live `posts` collection. Unauthenticated
-  /// reads are rejected by firestore.rules, so a `permission-denied` result
-  /// here actually confirms the round trip reached the real project and
-  /// rules were evaluated — a generic network/host failure would surface a
-  /// different error instead.
-  Future<void> _checkFirebaseConnection() async {
-    try {
-      await FirestorePostRepository().watchFeed(limit: 1).first;
-      setState(() => _status = 'Connected to Firebase — read the posts collection successfully.');
-    } catch (e) {
-      final message = e.toString();
-      final reachedFirestore = message.contains('permission-denied');
-      setState(() {
-        _status = reachedFirestore
-            ? 'Connected to Firebase — Firestore reachable, read blocked by '
-                'security rules as expected for an unauthenticated user.'
-            : 'Firebase connection check failed: $message';
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppConstants.appName)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Backend foundation ready: models, repositories and Firebase '
-                'services are wired up.\n\nReplace this screen with the real '
-                'Splash → Login/Register → Main App Shell navigation.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(_status, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
-            ],
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            authRepository: authRepository,
+            userRepository: userRepository,
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => FeedProvider(postRepository: postRepository),
+        ),
+      ],
+      child: MaterialApp(
+        title: AppConstants.displayName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        home: const _AuthGate(),
       ),
     );
+  }
+}
+
+/// Watches [AuthProvider] and shows the right top-level screen for the
+/// current auth state.
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    final status = context.watch<AuthProvider>().status;
+    switch (status) {
+      case AuthStatus.unknown:
+        return const SplashScreen();
+      case AuthStatus.authenticated:
+        return const MainShell();
+      case AuthStatus.unauthenticated:
+        return const LoginScreen();
+    }
   }
 }
