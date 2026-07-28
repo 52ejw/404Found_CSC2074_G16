@@ -253,7 +253,7 @@ class _FeedBody extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         itemCount: feed.posts.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
+        separatorBuilder: (_, _) => const Divider(height: 1),
         itemBuilder: (_, i) => PostCard(post: feed.posts[i]),
       ),
     );
