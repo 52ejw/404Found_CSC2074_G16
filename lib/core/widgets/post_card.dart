@@ -16,50 +16,61 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        child: Row(
-          children: [
-            _thumbnail(),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          post.itemName.isEmpty ? 'Untitled item' : post.itemName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w500),
+    return Semantics(
+      button: onTap != null,
+      label: '${post.postType.name} post for ${post.itemName}. ${_meta()}',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Row(
+            children: [
+              _thumbnail(),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            post.itemName.isEmpty
+                                ? 'Untitled item'
+                                : post.itemName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: AppSpacing.sm),
+                        TypeBadge(type: post.postType),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _meta(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      TypeBadge(type: post.postType),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _meta(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.outline),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            const Icon(Icons.bookmark_border,
-                size: 18, color: AppColors.placeholder),
-          ],
+              const SizedBox(width: AppSpacing.sm),
+              const Icon(
+                Icons.bookmark_border,
+                size: 18,
+                color: AppColors.placeholder,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -84,9 +95,9 @@ class PostCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: AppColors.placeholder,
-        child: const Icon(Icons.image_outlined, color: Colors.white, size: 22),
-      );
+    color: AppColors.placeholder,
+    child: const Icon(Icons.image_outlined, color: Colors.white, size: 22),
+  );
 
   String _meta() {
     final parts = <String>[];

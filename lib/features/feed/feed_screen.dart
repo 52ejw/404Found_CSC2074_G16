@@ -5,6 +5,8 @@ import '../../app/theme.dart';
 import '../../core/widgets/post_card.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/feed_provider.dart';
+import '../posts/post_details_screen.dart';
+import '../posts/post_form_screen.dart';
 
 /// Home / community feed (FR05). Header + promo banner + Lost/Found filter
 /// chips + a live list of posts bound to [FeedProvider].
@@ -35,7 +37,11 @@ class _PromoBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
@@ -48,32 +54,46 @@ class _PromoBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Lost something on campus?',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accentText)),
+                  const Text(
+                    'Lost something on campus?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentText,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('Post it in seconds — the campus is looking',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.accentText.withValues(alpha: 0.9))),
+                  Text(
+                    'Post it in seconds — the campus is looking',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.accentText.withValues(alpha: 0.9),
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PostFormScreen()),
+                    ),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, 34),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    child: const Text('Post now',
-                        style: TextStyle(fontSize: 12)),
+                    child: const Text(
+                      'Post now',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.school_outlined,
-                size: 40, color: Color(0xFFE0A93B)),
+            const Icon(
+              Icons.school_outlined,
+              size: 40,
+              color: Color(0xFFE0A93B),
+            ),
           ],
         ),
       ),
@@ -112,7 +132,12 @@ class _FeedBody extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         itemCount: feed.posts.length,
         separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (_, i) => PostCard(post: feed.posts[i]),
+        itemBuilder: (context, i) => PostCard(
+          post: feed.posts[i],
+          onTap: () => Navigator.of(
+            context,
+          ).push(PostDetailsScreen.route(context, postId: feed.posts[i].id)),
+        ),
       ),
     );
   }

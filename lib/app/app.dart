@@ -6,13 +6,25 @@ import '../features/app_shell/main_shell.dart';
 import '../features/authentication/login_screen.dart';
 import '../features/authentication/splash_screen.dart';
 import '../providers/auth_provider.dart';
+import '../providers/claims_provider.dart';
+import '../providers/conversations_provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/matches_provider.dart';
+import '../providers/post_editor_provider.dart';
+import '../providers/profile_provider.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/chat_repository.dart';
+import '../repositories/claim_repository.dart';
 import '../repositories/firebase_auth_repository.dart';
+import '../repositories/firestore_chat_repository.dart';
+import '../repositories/firestore_claim_repository.dart';
+import '../repositories/firestore_match_repository.dart';
 import '../repositories/firestore_post_repository.dart';
 import '../repositories/firestore_user_repository.dart';
+import '../repositories/match_repository.dart';
 import '../repositories/post_repository.dart';
 import '../repositories/user_repository.dart';
+import '../services/storage_service.dart';
 import 'constants.dart';
 import 'theme.dart';
 
@@ -25,20 +37,43 @@ class App extends StatelessWidget {
   final AuthRepository authRepository;
   final UserRepository userRepository;
   final PostRepository postRepository;
+  final ClaimRepository? claimRepository;
+  final ChatRepository? chatRepository;
+  final MatchRepository? matchRepository;
+  final StorageService? storageService;
 
   App({
     super.key,
     AuthRepository? authRepository,
     UserRepository? userRepository,
     PostRepository? postRepository,
-  })  : authRepository = authRepository ?? FirebaseAuthRepository(),
-        userRepository = userRepository ?? FirestoreUserRepository(),
-        postRepository = postRepository ?? FirestorePostRepository();
+    this.claimRepository,
+    this.chatRepository,
+    this.matchRepository,
+    this.storageService,
+  }) : authRepository = authRepository ?? FirebaseAuthRepository(),
+       userRepository = userRepository ?? FirestoreUserRepository(),
+       postRepository = postRepository ?? FirestorePostRepository();
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<AuthRepository>.value(value: authRepository),
+        Provider<UserRepository>.value(value: userRepository),
+        Provider<PostRepository>.value(value: postRepository),
+        Provider<ClaimRepository>(
+          create: (_) => claimRepository ?? FirestoreClaimRepository(),
+        ),
+        Provider<ChatRepository>(
+          create: (_) => chatRepository ?? FirestoreChatRepository(),
+        ),
+        Provider<MatchRepository>(
+          create: (_) => matchRepository ?? FirestoreMatchRepository(),
+        ),
+        Provider<StorageService>(
+          create: (_) => storageService ?? StorageService(),
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             authRepository: authRepository,
@@ -47,6 +82,36 @@ class App extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => FeedProvider(postRepository: postRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PostEditorProvider(
+            postRepository: context.read<PostRepository>(),
+            storageService: context.read<StorageService>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ProfileProvider(
+            userRepository: context.read<UserRepository>(),
+            postRepository: context.read<PostRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ClaimsProvider(
+            claimRepository: context.read<ClaimRepository>(),
+            postRepository: context.read<PostRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ConversationsProvider(
+            chatRepository: context.read<ChatRepository>(),
+            postRepository: context.read<PostRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => MatchesProvider(
+            matchRepository: context.read<MatchRepository>(),
+            postRepository: context.read<PostRepository>(),
+          ),
         ),
       ],
       child: MaterialApp(

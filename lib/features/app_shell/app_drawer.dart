@@ -5,6 +5,7 @@ import '../../app/constants.dart';
 import '../../app/theme.dart';
 import '../../core/widgets/app_logo.dart';
 import '../../providers/auth_provider.dart';
+import '../profile/settings_screen.dart';
 
 /// Side menu opened from the hamburger icon in [MainShell]'s top bar.
 /// Gives quick access to the user's own activity, saved items and settings,
@@ -19,9 +20,9 @@ class AppDrawer extends StatelessWidget {
 
     void soon(String label) {
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label — coming soon')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$label — coming soon')));
     }
 
     return Drawer(
@@ -107,7 +108,14 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.settings_outlined,
                     label: 'Settings',
-                    onTap: () => soon('Settings'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.help_outline,
@@ -154,17 +162,29 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = danger ? theme.colorScheme.error : theme.colorScheme.onSurface;
+    final color = danger
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurface;
     return ListTile(
-      leading: Icon(icon, color: danger ? theme.colorScheme.error : AppColors.primary),
-      title: Text(label,
-          style: theme.textTheme.bodyLarge
-              ?.copyWith(color: color, fontWeight: FontWeight.w500)),
+      leading: Icon(
+        icon,
+        color: danger ? theme.colorScheme.error : AppColors.primary,
+      ),
+      title: Text(
+        label,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       subtitle: subtitle == null
           ? null
-          : Text(subtitle!,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline)),
+          : Text(
+              subtitle!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
       onTap: onTap,
     );
   }
