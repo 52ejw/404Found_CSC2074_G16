@@ -52,12 +52,7 @@ class App extends StatelessWidget {
       child: MaterialApp(
         title: AppConstants.displayName,
         debugShowCheckedModeBanner: false,
-<<<<<<< Updated upstream
         // DevicePreview hooks (no-ops in release builds).
-=======
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
->>>>>>> Stashed changes
         locale: DevicePreview.locale(context),
         builder: DevicePreview.appBuilder,
         theme: AppTheme.light,
