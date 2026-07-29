@@ -37,37 +37,49 @@ class AuthScaffold extends StatelessWidget {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Stack(
+      backgroundColor: Colors.white,
+      body: Column(
         children: [
-          // Gradient backdrop + decorative blobs
-          const Positioned.fill(child: CampusBackdrop()),
-
-          // Content
-          SafeArea(
-            child: Column(
+          // Campus header: the illustrated university view with the lockup
+          // over it. Sized to the top of the screen only, so the buildings sit
+          // directly above the card instead of being hidden behind it.
+          Flexible(
+            flex: showBack ? 34 : 40,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                if (showBack)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: AppSpacing.lg, top: AppSpacing.sm),
-                      child: _BackChip(
-                        onTap: () => Navigator.of(context).maybePop(),
-                      ),
-                    ),
+                const CampusBackdrop(),
+                SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      if (showBack)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                left: AppSpacing.lg, top: AppSpacing.sm),
+                            child: _BackChip(
+                              onTap: () => Navigator.of(context).maybePop(),
+                            ),
+                          ),
+                        ),
+                      const Spacer(),
+                      const _UniversityLockup(),
+                      const Spacer(flex: 2),
+                    ],
                   ),
+                ),
+              ],
+            ),
+          ),
 
-                // University lockup sits over the campus illustration
-                const Spacer(),
-                const _UniversityLockup(),
-                SizedBox(height: media.size.height * (showBack ? 0.04 : 0.06)),
-
-                // White card
-                Flexible(
-                  flex: 5,
-                  child: Container(
+          // White card — fills the rest of the screen down to the bottom edge
+          Flexible(
+            flex: showBack ? 66 : 60,
+            child: Container(
                     width: double.infinity,
+                    transform: Matrix4.translationValues(0, -24, 0),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.vertical(
@@ -75,16 +87,18 @@ class AuthScaffold extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x1A0B2A6B),
+                          color: Color(0x330B2A6B),
                           blurRadius: 24,
                           offset: Offset(0, -6),
                         ),
                       ],
                     ),
-                    child: SingleChildScrollView(
+                    child: SafeArea(
+                      top: false,
+                      child: SingleChildScrollView(
                       padding: EdgeInsets.fromLTRB(
                         AppSpacing.xl,
-                        AppSpacing.xl,
+                        AppSpacing.xl + 24,
                         AppSpacing.xl,
                         AppSpacing.xl + media.viewInsets.bottom,
                       ),
@@ -116,8 +130,6 @@ class AuthScaffold extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
           ),
         ],
       ),
