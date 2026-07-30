@@ -5,6 +5,9 @@ import '../../app/constants.dart';
 import '../../app/theme.dart';
 import '../../core/widgets/app_logo.dart';
 import '../../providers/auth_provider.dart';
+import '../matches/matches_screen.dart';
+import '../profile/profile_screen.dart';
+import '../profile/settings_screen.dart';
 
 /// Side menu opened from the hamburger icon in [MainShell]'s top bar.
 /// Gives quick access to the user's own activity, saved items and settings,
@@ -19,9 +22,14 @@ class AppDrawer extends StatelessWidget {
 
     void soon(String label) {
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label — coming soon')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$label — coming soon')));
+    }
+
+    void open(Widget screen) {
+      Navigator.of(context).pop();
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     }
 
     return Drawer(
@@ -56,7 +64,8 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          auth.userId == null ? 'Guest' : 'Signed in',
+                          auth.user?.name ??
+                              (auth.userId == null ? 'Guest' : 'Signed in'),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: AppColors.accent,
                           ),
@@ -77,7 +86,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.article_outlined,
                     label: 'My posts',
                     subtitle: 'Items you reported lost or found',
-                    onTap: () => soon('My posts'),
+                    onTap: () => open(const ProfileScreen()),
                   ),
                   _DrawerItem(
                     icon: Icons.bookmark_border,
@@ -89,7 +98,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.auto_awesome_outlined,
                     label: 'My matches',
                     subtitle: 'Possible matches for your items',
-                    onTap: () => soon('My matches'),
+                    onTap: () => open(const MatchesScreen()),
                   ),
                   _DrawerItem(
                     icon: Icons.drafts_outlined,
@@ -101,13 +110,13 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.check_circle_outline,
                     label: 'Resolved',
                     subtitle: 'Items already returned',
-                    onTap: () => soon('Resolved'),
+                    onTap: () => open(const ProfileScreen(initialTab: 3)),
                   ),
                   const Divider(height: AppSpacing.xl),
                   _DrawerItem(
                     icon: Icons.settings_outlined,
                     label: 'Settings',
-                    onTap: () => soon('Settings'),
+                    onTap: () => open(const SettingsScreen()),
                   ),
                   _DrawerItem(
                     icon: Icons.help_outline,
@@ -154,17 +163,29 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = danger ? theme.colorScheme.error : theme.colorScheme.onSurface;
+    final color = danger
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurface;
     return ListTile(
-      leading: Icon(icon, color: danger ? theme.colorScheme.error : AppColors.primary),
-      title: Text(label,
-          style: theme.textTheme.bodyLarge
-              ?.copyWith(color: color, fontWeight: FontWeight.w500)),
+      leading: Icon(
+        icon,
+        color: danger ? theme.colorScheme.error : AppColors.primary,
+      ),
+      title: Text(
+        label,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       subtitle: subtitle == null
           ? null
-          : Text(subtitle!,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline)),
+          : Text(
+              subtitle!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
       onTap: onTap,
     );
   }

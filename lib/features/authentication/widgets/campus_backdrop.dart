@@ -23,9 +23,7 @@ class CampusBackdrop extends StatelessWidget {
           fit: BoxFit.cover,
           alignment: Alignment.center,
           // If the asset is missing the screen still renders, just on navy.
-          errorBuilder: (_, __, ___) => const ColoredBox(
-            color: AppColors.primary,
-          ),
+          errorBuilder: (_, _, _) => const ColoredBox(color: AppColors.primary),
         ),
 
         // Navy scrim: darkest at the top for status-bar contrast, and again at
