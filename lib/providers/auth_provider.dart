@@ -25,18 +25,28 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required AuthRepository authRepository,
     required UserRepository userRepository,
-  })  : _authRepository = authRepository,
-        _userRepository = userRepository {
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository {
     _sub = _authRepository.authStateChanges().listen(_onAuthChanged);
   }
 
   StreamSubscription<String?>? _sub;
+  StreamSubscription<AppUser?>? _userSub;
 
   AuthStatus _status = AuthStatus.unknown;
   AuthStatus get status => _status;
 
   String? _userId;
   String? get userId => _userId;
+
+  AppUser? _user;
+  AppUser? get user => _user;
+
+  bool _isProfileLoading = false;
+  bool get isProfileLoading => _isProfileLoading;
+
+  String? _profileError;
+  String? get profileError => _profileError;
 
   bool _isSubmitting = false;
   bool get isSubmitting => _isSubmitting;
@@ -45,10 +55,46 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
 
   void _onAuthChanged(String? uid) {
+    _userSub?.cancel();
     _userId = uid;
-    _status =
-        uid == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
+    _user = null;
+    _profileError = null;
+    _isProfileLoading = uid != null;
+    _status = uid == null
+        ? AuthStatus.unauthenticated
+        : AuthStatus.authenticated;
     notifyListeners();
+
+    if (uid == null) return;
+    _watchUser(uid);
+  }
+
+  void retryProfile() {
+    final uid = _userId;
+    if (uid == null) return;
+    _userSub?.cancel();
+    _isProfileLoading = true;
+    _profileError = null;
+    notifyListeners();
+    _watchUser(uid);
+  }
+
+  void _watchUser(String uid) {
+    _userSub = _userRepository
+        .watchUser(uid)
+        .listen(
+          (user) {
+            _user = user;
+            _isProfileLoading = false;
+            _profileError = null;
+            notifyListeners();
+          },
+          onError: (Object error) {
+            _profileError = _friendly(error);
+            _isProfileLoading = false;
+            notifyListeners();
+          },
+        );
   }
 
   Future<bool> login({required String email, required String password}) {
@@ -63,8 +109,10 @@ class AuthProvider extends ChangeNotifier {
     required String password,
   }) {
     return _run(() async {
-      final uid =
-          await _authRepository.register(email: email, password: password);
+      final uid = await _authRepository.register(
+        email: email,
+        password: password,
+      );
       await _userRepository.createUserProfile(
         AppUser(
           id: uid,
@@ -78,6 +126,29 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() => _authRepository.logout();
+
+  Future<bool> updateProfile({
+    required String name,
+    String? faculty,
+    String? contact,
+    String? profileImageUrl,
+  }) {
+    final uid = _userId;
+    if (uid == null) {
+      _error = 'You must be signed in to update your profile.';
+      notifyListeners();
+      return Future<bool>.value(false);
+    }
+    return _run(
+      () => _userRepository.updateUserProfile(
+        uid,
+        name: name.trim(),
+        faculty: _nullableTrimmed(faculty),
+        contact: _nullableTrimmed(contact),
+        profileImageUrl: _nullableTrimmed(profileImageUrl),
+      ),
+    );
+  }
 
   Future<bool> sendPasswordReset(String email) {
     return _run(() => _authRepository.sendPasswordResetEmail(email));
@@ -115,9 +186,15 @@ class AuthProvider extends ChangeNotifier {
     return s.startsWith(prefix) ? s.substring(prefix.length) : s;
   }
 
+  String? _nullableTrimmed(String? value) {
+    final trimmed = value?.trim();
+    return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
   @override
   void dispose() {
     _sub?.cancel();
+    _userSub?.cancel();
     super.dispose();
   }
 }

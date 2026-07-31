@@ -7,6 +7,7 @@ import '../../core/widgets/post_card.dart';
 import '../../core/widgets/state_views.dart';
 import '../../models/enums.dart';
 import '../../providers/feed_provider.dart';
+import '../posts/post_details_screen.dart';
 
 /// Advanced search + filter screen (RedNote/Trip style).
 /// Vertical collapsible filter panels: Type, Category, Date range, Sort.
@@ -30,8 +31,9 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _controller =
-        TextEditingController(text: context.read<FeedProvider>().query);
+    _controller = TextEditingController(
+      text: context.read<FeedProvider>().query,
+    );
   }
 
   @override
@@ -46,10 +48,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search'),
-        leading: const BackButton(),
-      ),
+      appBar: AppBar(title: const Text('Search'), leading: const BackButton()),
       body: SafeArea(
         top: false,
         child: Column(
@@ -57,7 +56,11 @@ class _SearchScreenState extends State<SearchScreen> {
             // Search input
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
               child: TextField(
                 controller: _controller,
                 autofocus: true,
@@ -92,8 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     _FilterPanel(
                       title: 'Type',
                       isExpanded: _expandType,
-                      onExpandChanged: (v) =>
-                          setState(() => _expandType = v),
+                      onExpandChanged: (v) => setState(() => _expandType = v),
                       child: Wrap(
                         spacing: AppSpacing.sm,
                         runSpacing: AppSpacing.xs,
@@ -106,14 +108,12 @@ class _SearchScreenState extends State<SearchScreen> {
                           FilterChip(
                             label: const Text('Lost'),
                             selected: feed.typeFilter == PostType.lost,
-                            onSelected: (_) =>
-                                feed.setType(PostType.lost),
+                            onSelected: (_) => feed.setType(PostType.lost),
                           ),
                           FilterChip(
                             label: const Text('Found'),
                             selected: feed.typeFilter == PostType.found,
-                            onSelected: (_) =>
-                                feed.setType(PostType.found),
+                            onSelected: (_) => feed.setType(PostType.found),
                           ),
                         ],
                       ),
@@ -151,8 +151,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     _FilterPanel(
                       title: 'Post time',
                       isExpanded: _expandDate,
-                      onExpandChanged: (v) =>
-                          setState(() => _expandDate = v),
+                      onExpandChanged: (v) => setState(() => _expandDate = v),
                       child: Wrap(
                         spacing: AppSpacing.sm,
                         runSpacing: AppSpacing.xs,
@@ -190,8 +189,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     _FilterPanel(
                       title: 'Sort by',
                       isExpanded: _expandSort,
-                      onExpandChanged: (v) =>
-                          setState(() => _expandSort = v),
+                      onExpandChanged: (v) => setState(() => _expandSort = v),
                       child: Wrap(
                         spacing: AppSpacing.sm,
                         runSpacing: AppSpacing.xs,
@@ -215,9 +213,12 @@ class _SearchScreenState extends State<SearchScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${feed.posts.length} result${feed.posts.length == 1 ? '' : 's'}',
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: theme.colorScheme.outline)),
+                        Text(
+                          '${feed.posts.length} result${feed.posts.length == 1 ? '' : 's'}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -227,9 +228,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
 
             // Results list
-            Expanded(
-              child: _Results(feed: feed),
-            ),
+            Expanded(child: _Results(feed: feed)),
           ],
         ),
       ),
@@ -262,9 +261,12 @@ class _FilterPanel extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w500)),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               Icon(
                 isExpanded ? Icons.expand_less : Icons.expand_more,
                 color: theme.colorScheme.outline,
@@ -272,10 +274,7 @@ class _FilterPanel extends StatelessWidget {
             ],
           ),
         ),
-        if (isExpanded) ...[
-          const SizedBox(height: AppSpacing.md),
-          child,
-        ],
+        if (isExpanded) ...[const SizedBox(height: AppSpacing.md), child],
       ],
     );
   }
@@ -301,8 +300,19 @@ class _Results extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       itemCount: feed.posts.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (_, i) => PostCard(post: feed.posts[i]),
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) {
+        final post = feed.posts[i];
+        return PostCard(
+          post: post,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  PostDetailsScreen(postId: post.id, initialPost: post),
+            ),
+          ),
+        );
+      },
     );
   }
 }

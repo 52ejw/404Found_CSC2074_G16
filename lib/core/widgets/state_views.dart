@@ -9,16 +9,20 @@ class LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          if (message != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            Text(message!, style: Theme.of(context).textTheme.bodyMedium),
+    return Semantics(
+      liveRegion: true,
+      label: message ?? 'Loading',
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            if (message != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(message!, style: Theme.of(context).textTheme.bodyMedium),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -50,15 +54,23 @@ class EmptyView extends StatelessWidget {
           children: [
             Icon(icon, size: 40, color: AppColors.placeholder),
             const SizedBox(height: AppSpacing.md),
-            Text(title,
+            Semantics(
+              header: true,
+              child: Text(
+                title,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium),
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: AppSpacing.xs),
-              Text(subtitle!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.outline)),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
             ],
             if (action != null) ...[
               const SizedBox(height: AppSpacing.lg),
@@ -85,29 +97,37 @@ class ErrorRetryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off_outlined,
-                size: 40, color: AppColors.placeholder),
-            const SizedBox(height: AppSpacing.md),
-            Text('Something went wrong',
-                style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Text(message,
+    return Semantics(
+      liveRegion: true,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 40,
+                color: AppColors.placeholder,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Something went wrong', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                message,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.outline)),
-            const SizedBox(height: AppSpacing.lg),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       ),
     );

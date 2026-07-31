@@ -1,0 +1,183 @@
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/search_keywords.dart';
+import '../models/enums.dart';
+import '../models/item_post.dart';
+import '../repositories/post_repository.dart';
+
+/// ViewModel for post creation, editing, details, deletion and status changes.
+class PostProvider extends ChangeNotifier {
+  PostProvider({required PostRepository postRepository})
+    : _postRepository = postRepository;
+
+  final PostRepository _postRepository;
+
+  String? _userId;
+  String _ownerName = '';
+
+  bool _isSubmitting = false;
+  bool get isSubmitting => _isSubmitting;
+
+  String? _error;
+  String? get error => _error;
+
+  ItemPost? _selectedPost;
+  ItemPost? get selectedPost => _selectedPost;
+
+  bool _isLoadingDetails = false;
+  bool get isLoadingDetails => _isLoadingDetails;
+
+  String? _detailsError;
+  String? get detailsError => _detailsError;
+
+  void setIdentity({required String? userId, String? ownerName}) {
+    _userId = userId;
+    _ownerName = ownerName?.trim() ?? '';
+  }
+
+  Future<void> loadPost(String postId, {ItemPost? initialPost}) async {
+    if (initialPost != null && initialPost.id == postId) {
+      _selectedPost = initialPost;
+    }
+    _isLoadingDetails = _selectedPost?.id != postId;
+    _detailsError = null;
+    notifyListeners();
+    try {
+      final post = await _postRepository.getPostById(postId);
+      if (post == null) {
+        _selectedPost = null;
+        _detailsError = 'This post no longer exists.';
+      } else {
+        _selectedPost = post;
+      }
+    } catch (error) {
+      _detailsError = _friendly(error);
+    } finally {
+      _isLoadingDetails = false;
+      notifyListeners();
+    }
+  }
+
+  Future<ItemPost?> savePost({
+    ItemPost? existingPost,
+    required PostType postType,
+    required String itemName,
+    required String category,
+    required String description,
+    required String location,
+    required DateTime eventDate,
+    required ContactPreference contactPreference,
+  }) async {
+    final uid = _userId;
+    if (uid == null) {
+      _error = 'You must be signed in to publish a post.';
+      notifyListeners();
+      return null;
+    }
+
+    _setSubmitting(true);
+    try {
+      final now = DateTime.now();
+      final keywords = buildSearchKeywords(
+        itemName: itemName,
+        category: category,
+        location: location,
+        description: description,
+      );
+
+      if (existingPost == null) {
+        final created = await _postRepository.createPost(
+          ItemPost(
+            id: '',
+            ownerId: uid,
+            ownerName: _ownerName.isEmpty ? 'Campus member' : _ownerName,
+            postType: postType,
+            itemName: itemName.trim(),
+            category: category,
+            description: description.trim(),
+            location: location,
+            eventDate: eventDate,
+            contactPreference: contactPreference,
+            createdAt: now,
+            updatedAt: now,
+            searchKeywords: keywords,
+          ),
+        );
+        _selectedPost = created;
+        return created;
+      }
+
+      final updated = existingPost.copyWith(
+        itemName: itemName.trim(),
+        category: category,
+        description: description.trim(),
+        location: location,
+        eventDate: eventDate,
+        contactPreference: contactPreference,
+        updatedAt: now,
+        searchKeywords: keywords,
+      );
+      await _postRepository.updatePost(updated, requesterId: uid);
+      _selectedPost = updated;
+      return updated;
+    } catch (error) {
+      _error = _friendly(error);
+      return null;
+    } finally {
+      _setSubmitting(false);
+    }
+  }
+
+  Future<bool> deletePost(ItemPost post) async {
+    final uid = _userId;
+    if (uid == null) {
+      _error = 'You must be signed in to delete a post.';
+      notifyListeners();
+      return false;
+    }
+    _setSubmitting(true);
+    try {
+      await _postRepository.deletePost(post.id, requesterId: uid);
+      if (_selectedPost?.id == post.id) _selectedPost = null;
+      return true;
+    } catch (error) {
+      _error = _friendly(error);
+      return false;
+    } finally {
+      _setSubmitting(false);
+    }
+  }
+
+  Future<bool> updateStatus(ItemPost post, PostStatus status) async {
+    _setSubmitting(true);
+    try {
+      await _postRepository.updateStatus(post.id, status);
+      _selectedPost = post.copyWith(status: status, updatedAt: DateTime.now());
+      return true;
+    } catch (error) {
+      _error = _friendly(error);
+      return false;
+    } finally {
+      _setSubmitting(false);
+    }
+  }
+
+  void clearError() {
+    if (_error == null) return;
+    _error = null;
+    notifyListeners();
+  }
+
+  void _setSubmitting(bool value) {
+    _isSubmitting = value;
+    if (value) _error = null;
+    notifyListeners();
+  }
+
+  String _friendly(Object error) {
+    final value = error.toString();
+    return value.startsWith('Exception: ')
+        ? value.substring('Exception: '.length)
+        : value;
+  }
+}
