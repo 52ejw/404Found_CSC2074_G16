@@ -19,7 +19,9 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
   ChatProvider? _chat;
+  int _lastMessageCount = 0;
 
   @override
   void didChangeDependencies() {
@@ -32,6 +34,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _messageController.dispose();
+    _scrollController.dispose();
     _chat?.closeConversation();
     super.dispose();
   }
@@ -39,6 +42,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatProvider>();
+    // New message arrived (incoming or just sent) — follow it to the bottom
+    // instead of leaving the user looking at whatever they last scrolled to.
+    if (chat.messages.length != _lastMessageCount) {
+      _lastMessageCount = chat.messages.length;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    }
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -58,7 +67,11 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             Expanded(
-              child: _MessagesBody(chat: chat, widget: widget),
+              child: _MessagesBody(
+                chat: chat,
+                widget: widget,
+                scrollController: _scrollController,
+              ),
             ),
             _Composer(
               controller: _messageController,
@@ -69,6 +82,15 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
     );
   }
 
@@ -84,10 +106,11 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _MessagesBody extends StatelessWidget {
-  const _MessagesBody({required this.chat, required this.widget});
+  const _MessagesBody({required this.chat, required this.widget, required this.scrollController});
 
   final ChatProvider chat;
   final ChatScreen widget;
+  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +133,7 @@ class _MessagesBody extends StatelessWidget {
     }
 
     return ListView.builder(
+      controller: scrollController,
       padding: const EdgeInsets.all(AppSpacing.lg),
       itemCount: chat.messages.length,
       itemBuilder: (context, index) {

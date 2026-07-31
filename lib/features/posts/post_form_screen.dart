@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/constants.dart';
@@ -22,7 +26,10 @@ class PostFormScreen extends StatefulWidget {
 }
 
 class _PostFormScreenState extends State<PostFormScreen> {
+  static const _maxPhotos = 5;
+
   final _formKey = GlobalKey<FormState>();
+  final _picker = ImagePicker();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   late PostType _postType;
@@ -30,6 +37,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
   String? _location;
   late DateTime _eventDate;
   late ContactPreference _contactPreference;
+  late List<String> _existingImageUrls;
+  final List<XFile> _newImages = [];
 
   @override
   void initState() {
@@ -42,6 +51,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
     _location = post?.location;
     _eventDate = post?.eventDate ?? DateTime.now();
     _contactPreference = post?.contactPreference ?? ContactPreference.inAppChat;
+    _existingImageUrls = List<String>.from(post?.imageUrls ?? const []);
+  }
+
+  int get _photoCount => _existingImageUrls.length + _newImages.length;
+
+  Future<void> _pickImage() async {
+    if (_photoCount >= _maxPhotos) return;
+    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked != null && mounted) setState(() => _newImages.add(picked));
   }
 
   @override
@@ -105,6 +123,41 @@ class _PostFormScreenState extends State<PostFormScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
+              Text('Photos', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: AppSpacing.sm),
+              SizedBox(
+                height: 84,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final url in _existingImageUrls)
+                      _PhotoThumb(
+                        key: ValueKey(url),
+                        image: Image.network(url, fit: BoxFit.cover),
+                        onRemove: () => setState(() => _existingImageUrls.remove(url)),
+                      ),
+                    for (final file in _newImages)
+                      _PhotoThumb(
+                        key: ValueKey(file.path),
+                        image: kIsWeb
+                            ? Image.network(file.path, fit: BoxFit.cover)
+                            : Image.file(File(file.path), fit: BoxFit.cover),
+                        onRemove: () => setState(() => _newImages.remove(file)),
+                      ),
+                    if (_photoCount < _maxPhotos) _AddPhotoTile(onTap: _pickImage),
+                  ],
+                ),
+              ),
+              if (kIsWeb && _newImages.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Photo upload works on the Android/iOS app — not yet supported in the web preview.',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.md),
               TextFormField(
                 key: const Key('post-item-name'),
                 controller: _nameController,
@@ -291,6 +344,10 @@ class _PostFormScreenState extends State<PostFormScreen> {
       location: _location!,
       eventDate: _eventDate,
       contactPreference: _contactPreference,
+      // dart:io File uploads aren't supported on Flutter web; skip rather
+      // than crash when testing in a browser (see StorageService).
+      newImages: kIsWeb ? const [] : _newImages.map((x) => File(x.path)).toList(),
+      keepImageUrls: _existingImageUrls,
     );
     if (!mounted || result == null) return;
 
@@ -317,6 +374,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
       _location = null;
       _eventDate = DateTime.now();
       _contactPreference = ContactPreference.inAppChat;
+      _existingImageUrls = [];
+      _newImages.clear();
     });
   }
 
@@ -336,5 +395,73 @@ class _PostFormScreenState extends State<PostFormScreen> {
       'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+}
+
+/// A picked/existing photo preview with a remove button, used in the
+/// horizontal photo strip.
+class _PhotoThumb extends StatelessWidget {
+  const _PhotoThumb({super.key, required this.image, required this.onRemove});
+
+  final Widget image;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.sm),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+            child: SizedBox(width: 76, height: 76, child: image),
+          ),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: Semantics(
+              button: true,
+              label: 'Remove photo',
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  child: const Icon(Icons.close, size: 14, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "+" tile that opens the image picker, shown at the end of the photo strip.
+class _AddPhotoTile extends StatelessWidget {
+  const _AddPhotoTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Add photo',
+      child: Material(
+        color: AppColors.placeholder.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          child: const SizedBox(
+            width: 76,
+            height: 76,
+            child: Icon(Icons.add_a_photo_outlined, color: AppColors.primary),
+          ),
+        ),
+      ),
+    );
   }
 }

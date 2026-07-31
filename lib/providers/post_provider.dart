@@ -1,16 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
 import '../core/utils/search_keywords.dart';
 import '../models/enums.dart';
 import '../models/item_post.dart';
 import '../repositories/post_repository.dart';
+import '../services/storage_service.dart';
 
 /// ViewModel for post creation, editing, details, deletion and status changes.
 class PostProvider extends ChangeNotifier {
-  PostProvider({required PostRepository postRepository})
-    : _postRepository = postRepository;
+  PostProvider({required PostRepository postRepository, StorageService? storageService})
+    : _postRepository = postRepository,
+      _storageService = storageService ?? StorageService();
 
   final PostRepository _postRepository;
+  final StorageService _storageService;
 
   String? _userId;
   String _ownerName = '';
@@ -67,6 +72,8 @@ class PostProvider extends ChangeNotifier {
     required String location,
     required DateTime eventDate,
     required ContactPreference contactPreference,
+    List<File> newImages = const [],
+    List<String> keepImageUrls = const [],
   }) async {
     final uid = _userId;
     if (uid == null) {
@@ -85,8 +92,9 @@ class PostProvider extends ChangeNotifier {
         description: description,
       );
 
+      ItemPost saved;
       if (existingPost == null) {
-        final created = await _postRepository.createPost(
+        saved = await _postRepository.createPost(
           ItemPost(
             id: '',
             ownerId: uid,
@@ -98,28 +106,43 @@ class PostProvider extends ChangeNotifier {
             location: location,
             eventDate: eventDate,
             contactPreference: contactPreference,
+            imageUrls: keepImageUrls,
             createdAt: now,
             updatedAt: now,
             searchKeywords: keywords,
           ),
         );
-        _selectedPost = created;
-        return created;
+      } else {
+        saved = existingPost.copyWith(
+          itemName: itemName.trim(),
+          category: category,
+          description: description.trim(),
+          location: location,
+          eventDate: eventDate,
+          contactPreference: contactPreference,
+          imageUrls: keepImageUrls,
+          updatedAt: now,
+          searchKeywords: keywords,
+        );
+        await _postRepository.updatePost(saved, requesterId: uid);
       }
 
-      final updated = existingPost.copyWith(
-        itemName: itemName.trim(),
-        category: category,
-        description: description.trim(),
-        location: location,
-        eventDate: eventDate,
-        contactPreference: contactPreference,
-        updatedAt: now,
-        searchKeywords: keywords,
-      );
-      await _postRepository.updatePost(updated, requesterId: uid);
-      _selectedPost = updated;
-      return updated;
+      if (newImages.isNotEmpty) {
+        final uploaded = <String>[];
+        for (final file in newImages) {
+          uploaded.add(
+            await _storageService.uploadPostImage(ownerId: uid, postId: saved.id, file: file),
+          );
+        }
+        saved = saved.copyWith(
+          imageUrls: [...saved.imageUrls, ...uploaded],
+          updatedAt: DateTime.now(),
+        );
+        await _postRepository.updatePost(saved, requesterId: uid);
+      }
+
+      _selectedPost = saved;
+      return saved;
     } catch (error) {
       _error = _friendly(error);
       return null;

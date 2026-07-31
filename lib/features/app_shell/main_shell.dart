@@ -190,65 +190,67 @@ class _MainShellState extends State<MainShell> {
         child: IndexedStack(index: _index, children: pages),
       ),
       extendBody: true,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomNavItem(
-              icon: Icons.home_outlined,
-              label: 'Home',
-              isSelected: _index == 0,
-              onTap: () => setState(() => _index = 0),
-            ),
-            _BottomNavItem(
-              key: _matchesKey,
-              icon: Icons.auto_awesome_outlined,
-              label: 'Matches',
-              isSelected: _index == 1,
-              onTap: () => setState(() => _index = 1),
-            ),
-            // Center + button (Create Post)
-            Semantics(
-              button: true,
-              selected: _index == 2,
-              label: 'Create post',
-              child: GestureDetector(
-                key: _createKey,
-                onTap: () => setState(() => _index = 2),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+      bottomNavigationBar: Material(
+        color: Theme.of(context).colorScheme.surface,
+        elevation: 8,
+        shadowColor: Colors.black26,
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _BottomNavItem(
+                icon: Icons.home_outlined,
+                label: 'Home',
+                isSelected: _index == 0,
+                onTap: () => setState(() => _index = 0),
+              ),
+              _BottomNavItem(
+                key: _matchesKey,
+                icon: Icons.auto_awesome_outlined,
+                label: 'Matches',
+                isSelected: _index == 1,
+                onTap: () => setState(() => _index = 1),
+              ),
+              // Center + button (Create Post)
+              Semantics(
+                button: true,
+                selected: _index == 2,
+                label: 'Create post',
+                child: Material(
+                  key: _createKey,
+                  color: AppColors.primary,
+                  shape: const CircleBorder(),
+                  elevation: 4,
+                  shadowColor: AppColors.primary.withValues(alpha: 0.6),
+                  child: InkWell(
+                    onTap: () => setState(() => _index = 2),
+                    customBorder: const CircleBorder(),
+                    child: const SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: Icon(Icons.add, color: Colors.white, size: 28),
+                    ),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 28),
                 ),
               ),
-            ),
-            _BottomNavItem(
-              key: _messagesKey,
-              icon: Icons.chat_bubble_outline,
-              label: 'Messages',
-              isSelected: _index == 3,
-              onTap: () => setState(() => _index = 3),
-            ),
-            _BottomNavItem(
-              key: _meKey,
-              icon: Icons.person_outline,
-              label: 'Me',
-              isSelected: _index == 4,
-              onTap: () => setState(() => _index = 4),
-            ),
-          ],
+              _BottomNavItem(
+                key: _messagesKey,
+                icon: Icons.chat_bubble_outline,
+                label: 'Messages',
+                isSelected: _index == 3,
+                onTap: () => setState(() => _index = 3),
+              ),
+              _BottomNavItem(
+                key: _meKey,
+                icon: Icons.person_outline,
+                label: 'Me',
+                isSelected: _index == 4,
+                onTap: () => setState(() => _index = 4),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -283,32 +285,42 @@ class _TopTab extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: '$label feed',
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.outline,
-              ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.sm),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
             ),
-            if (isSelected) ...[
-              const SizedBox(height: 4),
-              Container(
-                width: 24,
-                height: 2,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(1),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.outline,
+                  ),
                 ),
-              ),
-            ],
-          ],
+                if (isSelected) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 24,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -337,27 +349,35 @@ class _BottomNavItem extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary : theme.colorScheme.outline,
-              size: 24,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.sm),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: isSelected
-                    ? AppColors.primary
-                    : theme.colorScheme.outline,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? AppColors.primary : theme.colorScheme.outline,
+                  size: 24,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: isSelected ? AppColors.primary : theme.colorScheme.outline,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
