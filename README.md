@@ -169,9 +169,3 @@ flutter run
 flutter analyze
 flutter test
 ```
-
-## Known limitations
-
-- **Matching isn't triggered automatically yet.** `MatchingService.generateMatchesForNewPost` exists and is correct, but nothing calls it after a post is created — creating a post does not currently generate match suggestions or notifications.
-- **Notifications only cover matches**, and only once the gap above is closed. Claim creation/resolution and chat messages don't create a `NotificationItem` yet, and there's no Notifications screen to view them.
-- `test/widget_test.dart` currently has a failing test (`create-post form validates required fields`) — worth checking before relying on `flutter test` as a green build signal.
