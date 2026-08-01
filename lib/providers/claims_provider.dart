@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 import '../models/claim_request.dart';
 import '../models/enums.dart';
 import '../models/item_post.dart';
+import '../models/notification_item.dart';
 import '../repositories/claim_repository.dart';
+import '../repositories/notification_repository.dart';
 import '../repositories/post_repository.dart';
 import '../repositories/user_repository.dart';
 
@@ -15,13 +17,16 @@ class ClaimsProvider extends ChangeNotifier {
     required ClaimRepository claimRepository,
     required PostRepository postRepository,
     required UserRepository userRepository,
+    required NotificationRepository notificationRepository,
   }) : _claimRepository = claimRepository,
        _postRepository = postRepository,
-       _userRepository = userRepository;
+       _userRepository = userRepository,
+       _notificationRepository = notificationRepository;
 
   final ClaimRepository _claimRepository;
   final PostRepository _postRepository;
   final UserRepository _userRepository;
+  final NotificationRepository _notificationRepository;
 
   StreamSubscription<List<ClaimRequest>>? _claimsSub;
   String? _userId;
@@ -82,7 +87,7 @@ class ClaimsProvider extends ChangeNotifier {
 
     _setSubmitting(true);
     try {
-      await _claimRepository.createClaim(
+      final created = await _claimRepository.createClaim(
         ClaimRequest(
           id: '',
           postId: post.id,
@@ -93,6 +98,14 @@ class ClaimsProvider extends ChangeNotifier {
         ),
       );
       await _postRepository.updateStatus(post.id, PostStatus.claimRequested);
+      unawaited(
+        _notify(
+          userId: post.ownerId,
+          title: 'New claim on your post',
+          body: 'Someone submitted a claim for "${post.itemName}".',
+          relatedEntityId: created.id,
+        ),
+      );
       return true;
     } catch (error) {
       _error = _friendly(error);
@@ -117,12 +130,43 @@ class ClaimsProvider extends ChangeNotifier {
         await _userRepository.incrementSuccessfulRecoveries(claim.claimantId);
         await _userRepository.incrementSuccessfulRecoveries(claim.finderId);
       }
+      unawaited(
+        _notify(
+          userId: claim.claimantId,
+          title: 'Your claim was updated',
+          body: 'Your claim is now ${status.name}.',
+          relatedEntityId: claim.id,
+        ),
+      );
       return true;
     } catch (error) {
       _error = _friendly(error);
       return false;
     } finally {
       _setSubmitting(false);
+    }
+  }
+
+  Future<void> _notify({
+    required String userId,
+    required String title,
+    required String body,
+    required String relatedEntityId,
+  }) async {
+    try {
+      await _notificationRepository.createNotification(
+        NotificationItem(
+          id: '',
+          userId: userId,
+          type: NotificationType.claim,
+          title: title,
+          body: body,
+          relatedEntityId: relatedEntityId,
+          createdAt: DateTime.now(),
+        ),
+      );
+    } catch (error) {
+      debugPrint('Failed to create claim notification: $error');
     }
   }
 

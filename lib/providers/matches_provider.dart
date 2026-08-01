@@ -25,6 +25,10 @@ class MatchesProvider extends ChangeNotifier {
   List<MatchResult> _matches = const [];
   List<MatchResult> get matches => _matches;
 
+  /// Matches not yet accepted/dismissed — drives the Matches tab's nav badge.
+  int get suggestedCount =>
+      _matches.where((match) => match.status == MatchStatus.suggested).length;
+
   Map<String, ItemPost> _postsById = const {};
   ItemPost? postFor(String postId) => _postsById[postId];
 

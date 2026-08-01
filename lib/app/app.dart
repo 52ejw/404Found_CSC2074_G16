@@ -10,6 +10,7 @@ import '../providers/chat_provider.dart';
 import '../providers/claims_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/matches_provider.dart';
+import '../providers/notifications_provider.dart';
 import '../providers/post_provider.dart';
 import '../providers/profile_provider.dart';
 import '../repositories/auth_repository.dart';
@@ -19,11 +20,14 @@ import '../repositories/firebase_auth_repository.dart';
 import '../repositories/firestore_chat_repository.dart';
 import '../repositories/firestore_claim_repository.dart';
 import '../repositories/firestore_match_repository.dart';
+import '../repositories/firestore_notification_repository.dart';
 import '../repositories/firestore_post_repository.dart';
 import '../repositories/firestore_user_repository.dart';
 import '../repositories/match_repository.dart';
+import '../repositories/notification_repository.dart';
 import '../repositories/post_repository.dart';
 import '../repositories/user_repository.dart';
+import '../services/matching_service.dart';
 import 'constants.dart';
 import 'theme.dart';
 
@@ -39,6 +43,7 @@ class App extends StatelessWidget {
   final ClaimRepository claimRepository;
   final ChatRepository chatRepository;
   final MatchRepository matchRepository;
+  final NotificationRepository notificationRepository;
 
   App({
     super.key,
@@ -48,12 +53,14 @@ class App extends StatelessWidget {
     ClaimRepository? claimRepository,
     ChatRepository? chatRepository,
     MatchRepository? matchRepository,
+    NotificationRepository? notificationRepository,
   }) : authRepository = authRepository ?? FirebaseAuthRepository(),
        userRepository = userRepository ?? FirestoreUserRepository(),
        postRepository = postRepository ?? FirestorePostRepository(),
        claimRepository = claimRepository ?? FirestoreClaimRepository(),
        chatRepository = chatRepository ?? FirestoreChatRepository(),
-       matchRepository = matchRepository ?? FirestoreMatchRepository();
+       matchRepository = matchRepository ?? FirestoreMatchRepository(),
+       notificationRepository = notificationRepository ?? FirestoreNotificationRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +76,13 @@ class App extends StatelessWidget {
           create: (_) => FeedProvider(postRepository: postRepository),
         ),
         ChangeNotifierProxyProvider<AuthProvider, PostProvider>(
-          create: (_) => PostProvider(postRepository: postRepository),
+          create: (_) => PostProvider(
+            postRepository: postRepository,
+            matchingService: MatchingService(
+              postRepository: postRepository,
+              notificationRepository: notificationRepository,
+            ),
+          ),
           update: (_, auth, post) =>
               post!
                 ..setIdentity(userId: auth.userId, ownerName: auth.user?.name),
@@ -83,6 +96,7 @@ class App extends StatelessWidget {
             claimRepository: claimRepository,
             postRepository: postRepository,
             userRepository: userRepository,
+            notificationRepository: notificationRepository,
           ),
           update: (_, auth, claims) => claims!..setUserId(auth.userId),
         ),
@@ -91,6 +105,7 @@ class App extends StatelessWidget {
             chatRepository: chatRepository,
             postRepository: postRepository,
             userRepository: userRepository,
+            notificationRepository: notificationRepository,
           ),
           update: (_, auth, chat) => chat!..setUserId(auth.userId),
         ),
@@ -100,6 +115,11 @@ class App extends StatelessWidget {
             postRepository: postRepository,
           ),
           update: (_, auth, matches) => matches!..setUserId(auth.userId),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, NotificationsProvider>(
+          create: (_) =>
+              NotificationsProvider(notificationRepository: notificationRepository),
+          update: (_, auth, notifications) => notifications!..setUserId(auth.userId),
         ),
       ],
       child: MaterialApp(

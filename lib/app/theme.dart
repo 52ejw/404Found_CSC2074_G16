@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 ///
 /// Colours are taken from the university's visual identity: the deep navy of
 /// the crest and wordmark, the gold from the crest's sun motif, and the red
-/// used on campus signage and the Sunway logo.
+/// used on campus signage
+///  and the Sunway logo.
 ///
 /// Owned by Frontend Developer 1 (blueprint 5.5 `ThemeProvider`, "theme +
 /// design system"). Every screen and shared widget reads colours, spacing
@@ -70,8 +71,9 @@ class AppTheme {
     final base = ThemeData(useMaterial3: true, colorScheme: scheme);
 
     return base.copyWith(
-      scaffoldBackgroundColor:
-          brightness == Brightness.light ? Colors.white : scheme.surface,
+      scaffoldBackgroundColor: brightness == Brightness.light
+          ? Colors.white
+          : scheme.surface,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -90,8 +92,10 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           borderSide: const BorderSide(color: AppColors.placeholder),

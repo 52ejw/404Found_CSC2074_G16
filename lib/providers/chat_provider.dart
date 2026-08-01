@@ -4,9 +4,12 @@ import 'package:flutter/foundation.dart';
 
 import '../models/app_user.dart';
 import '../models/conversation.dart';
+import '../models/enums.dart';
 import '../models/item_post.dart';
 import '../models/message.dart';
+import '../models/notification_item.dart';
 import '../repositories/chat_repository.dart';
+import '../repositories/notification_repository.dart';
 import '../repositories/post_repository.dart';
 import '../repositories/user_repository.dart';
 
@@ -16,13 +19,16 @@ class ChatProvider extends ChangeNotifier {
     required ChatRepository chatRepository,
     required PostRepository postRepository,
     required UserRepository userRepository,
+    required NotificationRepository notificationRepository,
   }) : _chatRepository = chatRepository,
        _postRepository = postRepository,
-       _userRepository = userRepository;
+       _userRepository = userRepository,
+       _notificationRepository = notificationRepository;
 
   final ChatRepository _chatRepository;
   final PostRepository _postRepository;
   final UserRepository _userRepository;
+  final NotificationRepository _notificationRepository;
 
   StreamSubscription<List<Conversation>>? _conversationsSub;
   StreamSubscription<List<Message>>? _messagesSub;
@@ -149,6 +155,13 @@ class ChatProvider extends ChangeNotifier {
         senderId: uid,
         text: trimmed,
       );
+      final recipientId = conversation.participantIds.firstWhere(
+        (id) => id != uid,
+        orElse: () => '',
+      );
+      if (recipientId.isNotEmpty) {
+        unawaited(_notifyNewMessage(recipientId, conversation, trimmed));
+      }
       return true;
     } catch (error) {
       _messagesError = _friendly(error);
@@ -156,6 +169,28 @@ class ChatProvider extends ChangeNotifier {
     } finally {
       _isSending = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _notifyNewMessage(
+    String userId,
+    Conversation conversation,
+    String text,
+  ) async {
+    try {
+      await _notificationRepository.createNotification(
+        NotificationItem(
+          id: '',
+          userId: userId,
+          type: NotificationType.message,
+          title: 'New message',
+          body: text.length > 80 ? '${text.substring(0, 80)}…' : text,
+          relatedEntityId: conversation.id,
+          createdAt: DateTime.now(),
+        ),
+      );
+    } catch (error) {
+      debugPrint('Failed to create message notification: $error');
     }
   }
 

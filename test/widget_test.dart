@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 
 import 'package:found404/app/app.dart';
@@ -12,14 +15,27 @@ import 'package:found404/models/enums.dart';
 import 'package:found404/models/item_post.dart';
 import 'package:found404/models/match_result.dart';
 import 'package:found404/models/message.dart';
+import 'package:found404/models/notification_item.dart';
 import 'package:found404/features/posts/post_form_screen.dart';
 import 'package:found404/providers/post_provider.dart';
 import 'package:found404/repositories/auth_repository.dart';
 import 'package:found404/repositories/chat_repository.dart';
 import 'package:found404/repositories/claim_repository.dart';
 import 'package:found404/repositories/match_repository.dart';
+import 'package:found404/repositories/notification_repository.dart';
 import 'package:found404/repositories/post_repository.dart';
 import 'package:found404/repositories/user_repository.dart';
+import 'package:found404/services/firestore_service.dart';
+import 'package:found404/services/matching_service.dart';
+import 'package:found404/services/storage_service.dart';
+
+/// Avoids touching real Firebase Storage/Firestore — PostProvider's
+/// StorageService and MatchingService both eagerly read Firebase instances,
+/// which throw without Firebase.initializeApp() having run in the test
+/// binding.
+class _MockFirebaseStorage extends Mock implements FirebaseStorage {}
+
+class _MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
 
 /// Minimal fakes so the app can be pumped without a real Firebase backend.
 class _FakeAuthRepository implements AuthRepository {
@@ -168,6 +184,18 @@ class _FakeMatchRepository implements MatchRepository {
       Stream<List<MatchResult>>.value(const []);
 }
 
+class _FakeNotificationRepository implements NotificationRepository {
+  @override
+  Future<void> createNotification(NotificationItem notification) async {}
+
+  @override
+  Future<void> markAsRead(String notificationId) async {}
+
+  @override
+  Stream<List<NotificationItem>> watchNotifications(String userId) =>
+      Stream<List<NotificationItem>>.value(const []);
+}
+
 ItemPost _samplePost() => ItemPost(
   id: 'p1',
   ownerId: 'u1',
@@ -194,6 +222,7 @@ void main() {
         claimRepository: _FakeClaimRepository(),
         chatRepository: _FakeChatRepository(),
         matchRepository: _FakeMatchRepository(),
+        notificationRepository: _FakeNotificationRepository(),
       ),
     );
     // Let the auth-state stream emit null (unauthenticated).
@@ -240,8 +269,16 @@ void main() {
     WidgetTester tester,
   ) async {
     final repository = _FakePostRepository();
-    final provider = PostProvider(postRepository: repository)
-      ..setIdentity(userId: 'u1', ownerName: 'Tess');
+    final provider =
+        PostProvider(
+          postRepository: repository,
+          storageService: StorageService(storage: _MockFirebaseStorage()),
+          matchingService: MatchingService(
+            postRepository: repository,
+            notificationRepository: _FakeNotificationRepository(),
+            firestore: FirestoreService(firestore: _MockFirebaseFirestore()),
+          ),
+        )..setIdentity(userId: 'u1', ownerName: 'Tess');
 
     await tester.pumpWidget(
       ChangeNotifierProvider.value(

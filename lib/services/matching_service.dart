@@ -87,8 +87,11 @@ class MatchingService {
       final saved = await _saveMatch(match);
       await _postRepository.updateStatus(saved.lostPostId, PostStatus.possibleMatch);
       await _postRepository.updateStatus(saved.foundPostId, PostStatus.possibleMatch);
-      await _notifyOwner(saved.lostPostOwnerId, saved);
-      await _notifyOwner(saved.foundPostOwnerId, saved);
+      // A set, not two calls — avoids double-notifying a user who happens to
+      // own both posts in the match (e.g. testing with a single account).
+      for (final ownerId in {saved.lostPostOwnerId, saved.foundPostOwnerId}) {
+        await _notifyOwner(ownerId, saved);
+      }
     }
 
     return matches;

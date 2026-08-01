@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -6,15 +7,21 @@ import '../core/utils/search_keywords.dart';
 import '../models/enums.dart';
 import '../models/item_post.dart';
 import '../repositories/post_repository.dart';
+import '../services/matching_service.dart';
 import '../services/storage_service.dart';
 
 /// ViewModel for post creation, editing, details, deletion and status changes.
 class PostProvider extends ChangeNotifier {
-  PostProvider({required PostRepository postRepository, StorageService? storageService})
-    : _postRepository = postRepository,
-      _storageService = storageService ?? StorageService();
+  PostProvider({
+    required PostRepository postRepository,
+    required MatchingService matchingService,
+    StorageService? storageService,
+  }) : _postRepository = postRepository,
+       _matchingService = matchingService,
+       _storageService = storageService ?? StorageService();
 
   final PostRepository _postRepository;
+  final MatchingService _matchingService;
   final StorageService _storageService;
 
   String? _userId;
@@ -112,6 +119,9 @@ class PostProvider extends ChangeNotifier {
             searchKeywords: keywords,
           ),
         );
+        // Runs after the post is already saved so publishing feels instant;
+        // matching failures shouldn't block or fail the post creation itself.
+        unawaited(_runMatchingSafely(saved));
       } else {
         saved = existingPost.copyWith(
           itemName: itemName.trim(),
@@ -182,6 +192,14 @@ class PostProvider extends ChangeNotifier {
       return false;
     } finally {
       _setSubmitting(false);
+    }
+  }
+
+  Future<void> _runMatchingSafely(ItemPost post) async {
+    try {
+      await _matchingService.generateMatchesForNewPost(post);
+    } catch (error) {
+      debugPrint('Matching failed for post ${post.id}: $error');
     }
   }
 

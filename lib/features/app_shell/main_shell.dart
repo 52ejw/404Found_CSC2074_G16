@@ -5,10 +5,13 @@ import '../../app/theme.dart';
 import '../../core/widgets/coach_marks.dart';
 import '../../models/enums.dart';
 import '../../providers/feed_provider.dart';
+import '../../providers/matches_provider.dart';
+import '../../providers/notifications_provider.dart';
 import '../chat/conversations_screen.dart';
 import '../feed/feed_screen.dart';
 import '../feed/search_screen.dart';
 import '../matches/matches_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../posts/post_form_screen.dart';
 import '../profile/profile_screen.dart';
 import 'app_drawer.dart';
@@ -122,6 +125,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final suggestedMatches = context.watch<MatchesProvider>().suggestedCount;
     final pages = <Widget>[
       FeedScreen(onCreatePost: () => setState(() => _index = 2)),
       const MatchesScreen(),
@@ -181,6 +185,7 @@ class _MainShellState extends State<MainShell> {
                     MaterialPageRoute(builder: (_) => const SearchScreen()),
                   ),
                 ),
+                const _NotificationBell(),
               ],
             ),
       body: AnimatedSwitcher(
@@ -211,6 +216,7 @@ class _MainShellState extends State<MainShell> {
                 icon: Icons.auto_awesome_outlined,
                 label: 'Matches',
                 isSelected: _index == 1,
+                badgeCount: suggestedMatches,
                 onTap: () => setState(() => _index = 1),
               ),
               // Center + button (Create Post)
@@ -262,6 +268,27 @@ class _MainShellState extends State<MainShell> {
         if (_showTutorial)
           CoachMarkOverlay(steps: _coachMarks, onFinish: _finishTutorial),
       ],
+    );
+  }
+}
+
+/// Notification bell with an unread-count badge, opens [NotificationsScreen].
+class _NotificationBell extends StatelessWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = context.watch<NotificationsProvider>().unreadCount;
+    return IconButton(
+      tooltip: 'Notifications',
+      icon: Badge(
+        label: Text(unread > 99 ? '99+' : '$unread'),
+        isLabelVisible: unread > 0,
+        child: const Icon(Icons.notifications_outlined),
+      ),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+      ),
     );
   }
 }
@@ -333,6 +360,7 @@ class _BottomNavItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _BottomNavItem({
     super.key,
@@ -340,6 +368,7 @@ class _BottomNavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -348,7 +377,7 @@ class _BottomNavItem extends StatelessWidget {
     return Semantics(
       button: true,
       selected: isSelected,
-      label: label,
+      label: badgeCount > 0 ? '$label, $badgeCount new' : label,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -362,10 +391,14 @@ class _BottomNavItem extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  color: isSelected ? AppColors.primary : theme.colorScheme.outline,
-                  size: 24,
+                Badge(
+                  label: Text(badgeCount > 99 ? '99+' : '$badgeCount'),
+                  isLabelVisible: badgeCount > 0,
+                  child: Icon(
+                    icon,
+                    color: isSelected ? AppColors.primary : theme.colorScheme.outline,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
