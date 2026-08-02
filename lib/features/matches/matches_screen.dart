@@ -89,7 +89,7 @@ class _MatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MatchesProvider>();
-    final percentage = (match.totalScore * 100).clamp(0, 100).round();
+    final percentage = match.totalScore.clamp(0, 100).round();
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Padding(
@@ -112,7 +112,7 @@ class _MatchCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             LinearProgressIndicator(
-              value: match.totalScore.clamp(0, 1),
+              value: (match.totalScore / 100).clamp(0, 1),
               minHeight: 8,
               borderRadius: BorderRadius.circular(4),
               semanticsLabel: 'Match confidence',
@@ -127,10 +127,22 @@ class _MatchCard extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
               children: [
-                _ScoreChip(label: 'Category', score: match.categoryScore),
-                _ScoreChip(label: 'Words', score: match.keywordScore),
-                _ScoreChip(label: 'Place', score: match.locationScore),
-                _ScoreChip(label: 'Date', score: match.dateScore),
+                _ScoreChip(
+                  label: 'Category',
+                  score: match.categoryScore,
+                  maxScore: 35,
+                ),
+                _ScoreChip(
+                  label: 'Words',
+                  score: match.keywordScore,
+                  maxScore: 30,
+                ),
+                _ScoreChip(
+                  label: 'Place',
+                  score: match.locationScore,
+                  maxScore: 20,
+                ),
+                _ScoreChip(label: 'Date', score: match.dateScore, maxScore: 15),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -207,16 +219,24 @@ class _PostPairRow extends StatelessWidget {
 }
 
 class _ScoreChip extends StatelessWidget {
-  const _ScoreChip({required this.label, required this.score});
+  const _ScoreChip({
+    required this.label,
+    required this.score,
+    required this.maxScore,
+  });
 
   final String label;
   final double score;
+  final double maxScore;
 
   @override
   Widget build(BuildContext context) {
+    final pct = maxScore == 0
+        ? 0
+        : (score / maxScore * 100).clamp(0, 100).round();
     return Chip(
       visualDensity: VisualDensity.compact,
-      label: Text('$label ${(score * 100).clamp(0, 100).round()}%'),
+      label: Text('$label $pct%'),
     );
   }
 }
