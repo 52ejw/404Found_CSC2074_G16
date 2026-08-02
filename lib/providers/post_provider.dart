@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../core/utils/search_keywords.dart';
 import '../models/enums.dart';
@@ -79,7 +79,7 @@ class PostProvider extends ChangeNotifier {
     required String location,
     required DateTime eventDate,
     required ContactPreference contactPreference,
-    List<File> newImages = const [],
+    List<XFile> newImages = const [],
     List<String> keepImageUrls = const [],
   }) async {
     final uid = _userId;
@@ -141,7 +141,12 @@ class PostProvider extends ChangeNotifier {
         final uploaded = <String>[];
         for (final file in newImages) {
           uploaded.add(
-            await _storageService.uploadPostImage(ownerId: uid, postId: saved.id, file: file),
+            await _storageService.uploadPostImage(
+              ownerId: uid,
+              postId: saved.id,
+              bytes: await file.readAsBytes(),
+              fileName: file.name,
+            ),
           );
         }
         saved = saved.copyWith(

@@ -148,15 +148,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   ],
                 ),
               ),
-              if (kIsWeb && _newImages.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Photo upload works on the Android/iOS app — not yet supported in the web preview.',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ],
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 key: const Key('post-item-name'),
@@ -344,9 +335,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       location: _location!,
       eventDate: _eventDate,
       contactPreference: _contactPreference,
-      // dart:io File uploads aren't supported on Flutter web; skip rather
-      // than crash when testing in a browser (see StorageService).
-      newImages: kIsWeb ? const [] : _newImages.map((x) => File(x.path)).toList(),
+      newImages: _newImages,
       keepImageUrls: _existingImageUrls,
     );
     if (!mounted || result == null) return;

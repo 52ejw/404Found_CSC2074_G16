@@ -1,10 +1,15 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
 
 import '../core/errors/app_exception.dart';
 
 /// Thin wrapper around [FirebaseStorage] for post and profile images.
+///
+/// Uploads take raw bytes ([Uint8List]) rather than `dart:io File`, since
+/// `File`-based uploads (`putFile`) are unsupported on Flutter web — bytes
+/// via `putData` work identically on every platform. Callers read bytes from
+/// an `XFile` (image_picker) with `await file.readAsBytes()`.
 ///
 /// Paths are namespaced by owner id so Storage security rules (see
 /// `storage.rules`) can allow a user to write only under their own prefix
@@ -17,17 +22,20 @@ class StorageService {
   Future<String> uploadPostImage({
     required String ownerId,
     required String postId,
-    required File file,
+    required Uint8List bytes,
+    required String fileName,
   }) {
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.uri.pathSegments.last}';
-    final path = 'posts/$ownerId/$postId/$fileName';
-    return _upload(path, file);
+    final path = 'posts/$ownerId/$postId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    return _upload(path, bytes, fileName);
   }
 
-  Future<String> uploadProfileImage({required String userId, required File file}) {
-    final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}${_extensionOf(file)}';
-    final path = 'profiles/$userId/$fileName';
-    return _upload(path, file);
+  Future<String> uploadProfileImage({
+    required String userId,
+    required Uint8List bytes,
+    required String fileName,
+  }) {
+    final path = 'profiles/$userId/profile_${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    return _upload(path, bytes, fileName);
   }
 
   Future<void> deleteImage(String downloadUrl) async {
@@ -42,19 +50,32 @@ class StorageService {
     }
   }
 
-  Future<String> _upload(String path, File file) async {
+  Future<String> _upload(String path, Uint8List bytes, String fileName) async {
     try {
       final ref = _storage.ref().child(path);
-      final task = await ref.putFile(file);
+      // storage.rules checks contentType.matches('image/.*') — putData leaves
+      // this as application/octet-stream unless set explicitly, which would
+      // fail that check even with valid image bytes.
+      final task = await ref.putData(bytes, SettableMetadata(contentType: _contentTypeOf(fileName)));
       return task.ref.getDownloadURL();
     } on FirebaseException catch (e) {
       throw StorageException('Failed to upload image: ${e.message}');
     }
   }
 
-  String _extensionOf(File file) {
-    final segments = file.uri.pathSegments;
-    if (segments.isEmpty || !segments.last.contains('.')) return '.jpg';
-    return '.${segments.last.split('.').last}';
+  String _contentTypeOf(String fileName) {
+    final extension = fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
+    switch (extension) {
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      case 'heic':
+        return 'image/heic';
+      default:
+        return 'image/jpeg';
+    }
   }
 }
