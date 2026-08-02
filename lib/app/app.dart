@@ -60,7 +60,8 @@ class App extends StatelessWidget {
        claimRepository = claimRepository ?? FirestoreClaimRepository(),
        chatRepository = chatRepository ?? FirestoreChatRepository(),
        matchRepository = matchRepository ?? FirestoreMatchRepository(),
-       notificationRepository = notificationRepository ?? FirestoreNotificationRepository();
+       notificationRepository =
+           notificationRepository ?? FirestoreNotificationRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -117,9 +118,11 @@ class App extends StatelessWidget {
           update: (_, auth, matches) => matches!..setUserId(auth.userId),
         ),
         ChangeNotifierProxyProvider<AuthProvider, NotificationsProvider>(
-          create: (_) =>
-              NotificationsProvider(notificationRepository: notificationRepository),
-          update: (_, auth, notifications) => notifications!..setUserId(auth.userId),
+          create: (_) => NotificationsProvider(
+            notificationRepository: notificationRepository,
+          ),
+          update: (_, auth, notifications) =>
+              notifications!..setUserId(auth.userId),
         ),
       ],
       child: MaterialApp(
