@@ -89,6 +89,10 @@ class _MatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MatchesProvider>();
+    final currentUserId = context.watch<AuthProvider>().userId;
+    final userOwnsLost = lostPost != null && lostPost!.ownerId == currentUserId;
+    final otherPost = userOwnsLost ? foundPost : lostPost;
+    final otherPostLabel = userOwnsLost ? 'View found post' : 'View lost post';
     final percentage = match.totalScore.clamp(0, 100).round();
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -146,11 +150,11 @@ class _MatchCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            if (foundPost != null)
+            if (otherPost != null)
               OutlinedButton.icon(
-                onPressed: () => _openPost(context, foundPost!),
+                onPressed: () => _openPost(context, otherPost),
                 icon: const Icon(Icons.visibility_outlined),
-                label: const Text('View found post'),
+                label: Text(otherPostLabel),
               ),
             if (match.status == MatchStatus.suggested)
               Row(
