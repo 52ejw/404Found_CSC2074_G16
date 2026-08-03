@@ -57,6 +57,10 @@ class _ProfileScreenState extends State<ProfileScreen>
               user: auth.user,
               userId: auth.userId,
               postCount: profile.posts.length,
+              // Only true when pushed as its own route (e.g. from the drawer's
+              // "My posts"/"Resolved" shortcuts) — false for the "Me" tab,
+              // which is swapped in place and has nothing to pop back to.
+              showBackButton: Navigator.of(context).canPop(),
               onEdit: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const EditProfileScreen()),
               ),
@@ -134,6 +138,7 @@ class _ProfileHeader extends StatelessWidget {
     required this.user,
     required this.userId,
     required this.postCount,
+    required this.showBackButton,
     required this.onEdit,
     required this.onSettings,
   });
@@ -141,6 +146,7 @@ class _ProfileHeader extends StatelessWidget {
   final AppUser? user;
   final String? userId;
   final int postCount;
+  final bool showBackButton;
   final VoidCallback onEdit;
   final VoidCallback onSettings;
 
@@ -171,6 +177,13 @@ class _ProfileHeader extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (showBackButton)
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: () => Navigator.of(context).pop(),
+                  color: Colors.white,
+                  icon: const Icon(Icons.arrow_back),
+                ),
               const Spacer(),
               IconButton(
                 tooltip: 'Settings',

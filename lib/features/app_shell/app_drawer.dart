@@ -6,6 +6,7 @@ import '../../app/theme.dart';
 import '../../core/widgets/app_logo.dart';
 import '../../providers/auth_provider.dart';
 import '../matches/matches_screen.dart';
+import '../profile/help_screen.dart';
 import '../profile/profile_screen.dart';
 import '../profile/settings_screen.dart';
 
@@ -92,7 +93,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.bookmark_border,
                     label: 'Saved items',
                     subtitle: 'Posts you bookmarked',
-                    onTap: () => soon('Saved items'),
+                    onTap: () => open(const ProfileScreen(initialTab: 1)),
                   ),
                   _DrawerItem(
                     icon: Icons.auto_awesome_outlined,
@@ -121,7 +122,7 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.help_outline,
                     label: 'Help & guidelines',
-                    onTap: () => soon('Help & guidelines'),
+                    onTap: () => open(const HelpScreen()),
                   ),
                 ],
               ),
