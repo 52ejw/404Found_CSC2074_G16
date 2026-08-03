@@ -154,9 +154,20 @@ class _FeedBody extends StatelessWidget {
     );
   }
 
+  // The shell's bottom nav floats over the body (extendBody: true), so the
+  // last row needs enough bottom padding to scroll clear of it instead of
+  // sitting stuck underneath with no more room left to scroll.
+  double _bottomClearance(BuildContext context) =>
+      AppSpacing.xl + 64 + MediaQuery.paddingOf(context).bottom;
+
   Widget _buildList(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        _bottomClearance(context),
+      ),
       itemCount: feed.posts.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, i) {
@@ -168,7 +179,12 @@ class _FeedBody extends StatelessWidget {
 
   Widget _buildGrid(BuildContext context) {
     return GridView.builder(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        _bottomClearance(context),
+      ),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: AppSpacing.md,
