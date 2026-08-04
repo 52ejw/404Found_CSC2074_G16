@@ -42,8 +42,32 @@ class FeedProvider extends ChangeNotifier {
   String _query = '';
   String get query => _query;
 
+  /// Newest-first by default (FR06). Sorting is applied after the stream
+  /// arrives rather than in the query, so it needs no extra Firestore index.
+  bool _newestFirst = true;
+  bool get newestFirst => _newestFirst;
+
+  /// Optional "posted within the last N days" filter. Null means any date.
+  int? _withinDays;
+  int? get withinDays => _withinDays;
+
   bool get hasActiveFilters =>
-      _type != null || _category != null || _query.trim().isNotEmpty;
+      _type != null ||
+      _category != null ||
+      _withinDays != null ||
+      _query.trim().isNotEmpty;
+
+  void setSort({required bool newestFirst}) {
+    if (_newestFirst == newestFirst) return;
+    _newestFirst = newestFirst;
+    _applyView();
+  }
+
+  void setWithinDays(int? days) {
+    if (_withinDays == days) return;
+    _withinDays = days;
+    _applyView();
+  }
 
   void setType(PostType? type) {
     if (_type == type) return;
@@ -69,11 +93,36 @@ class FeedProvider extends ChangeNotifier {
     if (!hasActiveFilters) return;
     _type = null;
     _category = null;
+    _withinDays = null;
     _query = '';
     _subscribe();
   }
 
   void retry() => _subscribe();
+
+  /// Unfiltered results straight from the repository. The date filter and
+  /// sort are applied on top of this, so changing either does not need a new
+  /// database query.
+  List<ItemPost> _raw = const [];
+
+  /// Rebuilds [posts] from [_raw] using the current date filter and sort.
+  void _applyView({bool notify = true}) {
+    var view = _raw;
+
+    if (_withinDays != null) {
+      final cutoff = DateTime.now().subtract(Duration(days: _withinDays!));
+      view = view.where((p) => p.createdAt.isAfter(cutoff)).toList();
+    } else {
+      view = List<ItemPost>.of(view);
+    }
+
+    view.sort((a, b) => _newestFirst
+        ? b.createdAt.compareTo(a.createdAt)
+        : a.createdAt.compareTo(b.createdAt));
+
+    _posts = view;
+    if (notify) notifyListeners();
+  }
 
   void _subscribe() {
     _sub?.cancel();
@@ -87,7 +136,8 @@ class FeedProvider extends ChangeNotifier {
         .watchFeed(type: _type, category: _category, keywords: keywords)
         .listen(
       (posts) {
-        _posts = posts;
+        _raw = posts;
+        _applyView(notify: false);
         _isLoading = false;
         _error = null;
         notifyListeners();
