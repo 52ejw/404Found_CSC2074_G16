@@ -12,10 +12,20 @@ class Validators {
     return null;
   }
 
+  /// Only Sunway student mail is accepted, so every account belongs to a real
+  /// member of the campus community (NFR04/NFR05). This is only the first of
+  /// two checks — Firestore security rules reject non-campus accounts on the
+  /// server as well, because a client-side check alone can be bypassed.
+  static const String campusEmailDomain = '@imail.sunway.edu.my';
+
   static String? email(String? value) {
     if (value == null || value.trim().isEmpty) return 'Email is required';
-    if (!_emailPattern.hasMatch(value.trim())) {
+    final email = value.trim().toLowerCase();
+    if (!_emailPattern.hasMatch(email)) {
       return 'Enter a valid email address';
+    }
+    if (!email.endsWith(campusEmailDomain)) {
+      return 'Use your Sunway email ($campusEmailDomain)';
     }
     return null;
   }

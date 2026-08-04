@@ -5,8 +5,11 @@ rules_version = '2';
 // checked from the path alone, without a Firestore lookup.
 service firebase.storage {
   match /b/{bucket}/o {
+    // Matches the Firestore rules: only Sunway student mail may use the app.
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email.lower().matches('.*@imail[.]sunway[.]edu[.]my');
     }
 
     function isValidImage() {

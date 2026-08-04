@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../app/theme.dart';
 import '../../core/widgets/coach_marks.dart';
+import '../../models/conversation.dart';
 import '../../models/enums.dart';
 import '../../providers/feed_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../providers/matches_provider.dart';
 import '../../providers/notifications_provider.dart';
 import '../chat/conversations_screen.dart';
@@ -123,9 +125,86 @@ class _MainShellState extends State<MainShell> {
     context.read<FeedProvider>().setType(type);
   }
 
+  /// Shows an in-app banner for a newly received message, with a shortcut
+  /// straight to the Messages tab (FR18).
+  void _showMessageAlert(ChatProvider chat, Conversation conversation) {
+    final sender = chat.partnerName(conversation);
+    final preview = conversation.lastMessage.trim();
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.all(AppSpacing.md),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          ),
+          content: Row(
+            children: [
+              const CircleAvatar(
+                radius: 15,
+                backgroundColor: AppColors.accent,
+                child: Icon(Icons.chat_bubble, size: 15, color: AppColors.primaryDark),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'New message from $sender',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (preview.isNotEmpty)
+                      Text(
+                        preview,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          action: SnackBarAction(
+            label: 'Open',
+            textColor: AppColors.accent,
+            onPressed: () => setState(() => _index = 3),
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final suggestedMatches = context.watch<MatchesProvider>().suggestedCount;
+    final chat = context.watch<ChatProvider>();
+    final unreadMessages = chat.unreadCount;
+
+    // Pop an alert for a message that arrived while the app was open. Done
+    // after the frame so a SnackBar is never shown during a build.
+    final alert = chat.pendingAlert;
+    if (alert != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        chat.consumeAlert();
+        if (_index == 3) return;          // already on Messages, no need to shout
+        _showMessageAlert(chat, alert);
+      });
+    }
+
     final pages = <Widget>[
       FeedScreen(onCreatePost: () => setState(() => _index = 2)),
       const MatchesScreen(),
@@ -246,6 +325,7 @@ class _MainShellState extends State<MainShell> {
                 icon: Icons.chat_bubble_outline,
                 label: 'Messages',
                 isSelected: _index == 3,
+                badgeCount: unreadMessages,
                 onTap: () => setState(() => _index = 3),
               ),
               _BottomNavItem(

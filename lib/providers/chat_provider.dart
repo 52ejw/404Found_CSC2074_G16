@@ -60,6 +60,51 @@ class ChatProvider extends ChangeNotifier {
   String? _messagesError;
   String? get messagesError => _messagesError;
 
+  /// Total unread messages across every conversation, read from each
+  /// conversation's `unreadCounts` map. Drives the red badge on the Messages
+  /// tab (FR18 in-app notifications).
+  int _unreadCount = 0;
+  int get unreadCount => _unreadCount;
+  bool get hasUnread => _unreadCount > 0;
+
+  /// Set when the unread total rises while the app is open, so the shell can
+  /// pop an alert for the newest conversation. Cleared by [consumeAlert] so
+  /// the same message never pops twice.
+  Conversation? _pendingAlert;
+  Conversation? get pendingAlert => _pendingAlert;
+
+  void consumeAlert() => _pendingAlert = null;
+
+  /// Recomputes the unread total and decides whether a new message just
+  /// arrived. A falling total means the user opened a chat and messages were
+  /// marked read, which must not trigger an alert.
+  /// False until the first snapshot has been counted, so opening the app with
+  /// messages already waiting fills the badge without popping an alert for
+  /// something the user has seen before.
+  bool _unreadPrimed = false;
+
+  void _refreshUnread(List<Conversation> conversations) {
+    final previous = _unreadCount;
+    var total = 0;
+    for (final conversation in conversations) {
+      total += conversation.unreadCounts[_userId] ?? 0;
+    }
+
+    if (total > previous && _unreadPrimed) {
+      Conversation? newest;
+      for (final conversation in conversations) {
+        if ((conversation.unreadCounts[_userId] ?? 0) == 0) continue;
+        if (newest == null ||
+            conversation.lastMessageAt.isAfter(newest.lastMessageAt)) {
+          newest = conversation;
+        }
+      }
+      _pendingAlert = newest;
+    }
+    _unreadCount = total;
+    _unreadPrimed = true;
+  }
+
   void setUserId(String? userId) {
     if (_userId == userId) return;
     _userId = userId;
@@ -215,6 +260,9 @@ class ChatProvider extends ChangeNotifier {
     _messages = const [];
     _usersById = const {};
     _postsById = const {};
+    _unreadCount = 0;
+    _unreadPrimed = false;
+    _pendingAlert = null;
     _error = null;
     final uid = _userId;
     _isLoading = uid != null;
@@ -226,6 +274,7 @@ class ChatProvider extends ChangeNotifier {
         .listen(
           (conversations) {
             _conversations = conversations;
+            _refreshUnread(conversations);
             _isLoading = false;
             _error = null;
             notifyListeners();

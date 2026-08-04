@@ -9,8 +9,16 @@ rules_version = '2';
 //   - Users may read/update only their own notifications and profile.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Only Sunway student mail may use the app. The client also checks this
+    // in Validators.email, but that check can be bypassed, so every rule
+    // below goes through isSignedIn() and this domain test as well.
+    function isCampusAccount() {
+      return request.auth.token.email is string
+          && request.auth.token.email.lower().matches('.*@imail[.]sunway[.]edu[.]my');
+    }
+
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && isCampusAccount();
     }
 
     function isOwner(userId) {

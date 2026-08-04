@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
             AppTextField(
               controller: _email,
               label: 'Email',
-              hint: 'name@university.edu',
+              hint: 'name@imail.sunway.edu.my',
               icon: Icons.mail_outline,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
