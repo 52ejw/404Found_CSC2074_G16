@@ -26,7 +26,6 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _expandDate = false;
   bool _expandSort = false;
 
-  String? _selectedDateRange;
 
   @override
   void initState() {
@@ -158,27 +157,23 @@ class _SearchScreenState extends State<SearchScreen> {
                         children: [
                           FilterChip(
                             label: const Text('All'),
-                            selected: _selectedDateRange == null,
-                            onSelected: (_) =>
-                                setState(() => _selectedDateRange = null),
+                            selected: feed.withinDays == null,
+                            onSelected: (_) => feed.setWithinDays(null),
                           ),
                           FilterChip(
                             label: const Text('Past 24 hours'),
-                            selected: _selectedDateRange == '1d',
-                            onSelected: (_) =>
-                                setState(() => _selectedDateRange = '1d'),
+                            selected: feed.withinDays == 1,
+                            onSelected: (_) => feed.setWithinDays(1),
                           ),
                           FilterChip(
                             label: const Text('Past week'),
-                            selected: _selectedDateRange == '7d',
-                            onSelected: (_) =>
-                                setState(() => _selectedDateRange = '7d'),
+                            selected: feed.withinDays == 7,
+                            onSelected: (_) => feed.setWithinDays(7),
                           ),
                           FilterChip(
                             label: const Text('Past month'),
-                            selected: _selectedDateRange == '30d',
-                            onSelected: (_) =>
-                                setState(() => _selectedDateRange = '30d'),
+                            selected: feed.withinDays == 30,
+                            onSelected: (_) => feed.setWithinDays(30),
                           ),
                         ],
                       ),
@@ -196,13 +191,15 @@ class _SearchScreenState extends State<SearchScreen> {
                         children: [
                           FilterChip(
                             label: const Text('Newest'),
-                            selected: true,
-                            onSelected: (_) {},
+                            selected: feed.newestFirst,
+                            onSelected: (_) =>
+                                feed.setSort(newestFirst: true),
                           ),
                           FilterChip(
                             label: const Text('Oldest'),
-                            selected: false,
-                            onSelected: (_) {},
+                            selected: !feed.newestFirst,
+                            onSelected: (_) =>
+                                feed.setSort(newestFirst: false),
                           ),
                         ],
                       ),
