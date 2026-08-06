@@ -2,14 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 
-/// The "404" brand mark — a nod to the group name, 404 Found.
-///
-/// A rounded navy tile with the numerals set in gold; the middle "0" is drawn
-/// as a ring so it reads as a magnifier/lost-item motif rather than plain type.
-/// Used on the splash, landing, drawer and auth screens so the brand is
-/// consistent everywhere (NFR11).
 class AppLogo extends StatelessWidget {
-  /// Overall side length of the tile.
   final double size;
 
   /// Light variant (gold on navy) for dark backdrops, or inverted for white.
@@ -19,8 +12,9 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tileColor =
-        onDark ? Colors.white.withValues(alpha: 0.14) : AppColors.primary;
+    final tileColor = onDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : AppColors.primary;
     final digitColor = AppColors.accent;
 
     return Container(
@@ -48,10 +42,7 @@ class AppLogo extends StatelessWidget {
                   height: size * 0.26,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: digitColor,
-                      width: size * 0.055,
-                    ),
+                    border: Border.all(color: digitColor, width: size * 0.055),
                   ),
                 ),
                 SizedBox(width: size * 0.03),

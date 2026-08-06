@@ -4,9 +4,6 @@ import '../../app/theme.dart';
 import '../../models/item_post.dart';
 import 'type_badge.dart';
 
-/// Single row in the feed / search results: thumbnail, item name, Lost/Found
-/// badge, and a `category · location · time` meta line. Reused everywhere a
-/// post is listed so the feed stays visually consistent.
 class PostCard extends StatelessWidget {
   final ItemPost post;
   final VoidCallback? onTap;

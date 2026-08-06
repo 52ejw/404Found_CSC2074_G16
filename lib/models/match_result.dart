@@ -4,19 +4,10 @@ import '../core/utils/firestore_converters.dart';
 import 'enums.dart';
 
 /// Corresponds to a document in the `matches/{matchId}` collection.
-///
-/// Score fields are stored individually (not just [totalScore]) so the
-/// match suggestions screen can show an explainable breakdown, per section
-/// 7 of the blueprint.
 class MatchResult {
   final String id;
   final String lostPostId;
   final String foundPostId;
-
-  /// Owner ids of the two posts, denormalized at creation time so
-  /// [MatchRepository.watchMatchesForUser] can query matches directly
-  /// without joining against `posts` (same rationale as
-  /// [ItemPost.searchKeywords] / [Conversation.unreadCounts]).
   final String lostPostOwnerId;
   final String foundPostOwnerId;
   final double categoryScore;
@@ -54,7 +45,11 @@ class MatchResult {
       locationScore: (map['locationScore'] as num?)?.toDouble() ?? 0,
       dateScore: (map['dateScore'] as num?)?.toDouble() ?? 0,
       totalScore: (map['totalScore'] as num?)?.toDouble() ?? 0,
-      status: enumFromName(MatchStatus.values, map['status'] as String?, MatchStatus.suggested),
+      status: enumFromName(
+        MatchStatus.values,
+        map['status'] as String?,
+        MatchStatus.suggested,
+      ),
       createdAt: dateTimeFromFirestore(map['createdAt']),
     );
   }

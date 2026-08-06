@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 
-/// Sunway campus photo used as the header of the auth screens.
-///
-/// The photo is cropped to fill whatever slice of the screen the header is
-/// given, with a navy gradient scrim over it so the 404 lockup and the "Back"
-/// chip stay legible and the header blends into the white form card below.
 class CampusBackdrop extends StatelessWidget {
   const CampusBackdrop({super.key});
 
@@ -26,8 +21,6 @@ class CampusBackdrop extends StatelessWidget {
           errorBuilder: (_, _, _) => const ColoredBox(color: AppColors.primary),
         ),
 
-        // Navy scrim: darkest at the top for status-bar contrast, and again at
-        // the bottom so the white card meets the photo cleanly.
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(

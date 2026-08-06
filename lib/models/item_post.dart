@@ -4,11 +4,6 @@ import '../core/utils/firestore_converters.dart';
 import 'enums.dart';
 
 /// Corresponds to a document in the `posts/{postId}` collection.
-///
-/// [searchKeywords] holds lowercased, tokenised terms derived from
-/// [itemName]/[description]/[category]/[location] so the feed can run
-/// prefix search with Firestore's `array-contains` without a paid search
-/// service.
 class ItemPost {
   final String id;
   final String ownerId;
@@ -49,7 +44,11 @@ class ItemPost {
       id: id,
       ownerId: map['ownerId'] as String? ?? '',
       ownerName: map['ownerName'] as String? ?? '',
-      postType: enumFromName(PostType.values, map['postType'] as String?, PostType.lost),
+      postType: enumFromName(
+        PostType.values,
+        map['postType'] as String?,
+        PostType.lost,
+      ),
       itemName: map['itemName'] as String? ?? '',
       category: map['category'] as String? ?? '',
       description: map['description'] as String? ?? '',
@@ -61,10 +60,16 @@ class ItemPost {
         map['contactPreference'] as String?,
         ContactPreference.inAppChat,
       ),
-      status: enumFromName(PostStatus.values, map['status'] as String?, PostStatus.open),
+      status: enumFromName(
+        PostStatus.values,
+        map['status'] as String?,
+        PostStatus.open,
+      ),
       createdAt: dateTimeFromFirestore(map['createdAt']),
       updatedAt: dateTimeFromFirestore(map['updatedAt']),
-      searchKeywords: List<String>.from(map['searchKeywords'] as List? ?? const []),
+      searchKeywords: List<String>.from(
+        map['searchKeywords'] as List? ?? const [],
+      ),
     );
   }
 

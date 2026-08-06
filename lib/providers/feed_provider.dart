@@ -7,18 +7,11 @@ import '../models/enums.dart';
 import '../models/item_post.dart';
 import '../repositories/post_repository.dart';
 
-/// ViewModel for the community feed (FR05/FR06). Subscribes to
-/// `PostRepository.watchFeed` and re-subscribes whenever the type filter,
-/// category or search query changes, exposing loading/empty/error state to
-/// the feed and search screens.
-///
-/// Part of Frontend Developer 2's Provider layer; this is the agreed contract
-/// Frontend 1's feed screen is built against.
 class FeedProvider extends ChangeNotifier {
   final PostRepository _postRepository;
 
   FeedProvider({required PostRepository postRepository})
-      : _postRepository = postRepository {
+    : _postRepository = postRepository {
     _subscribe();
   }
 
@@ -42,12 +35,9 @@ class FeedProvider extends ChangeNotifier {
   String _query = '';
   String get query => _query;
 
-  /// Newest-first by default (FR06). Sorting is applied after the stream
-  /// arrives rather than in the query, so it needs no extra Firestore index.
   bool _newestFirst = true;
   bool get newestFirst => _newestFirst;
 
-  /// Optional "posted within the last N days" filter. Null means any date.
   int? _withinDays;
   int? get withinDays => _withinDays;
 
@@ -76,8 +66,7 @@ class FeedProvider extends ChangeNotifier {
   }
 
   void setCategory(String? category) {
-    final normalized =
-        (category == null || category.isEmpty) ? null : category;
+    final normalized = (category == null || category.isEmpty) ? null : category;
     if (_category == normalized) return;
     _category = normalized;
     _subscribe();
@@ -100,12 +89,8 @@ class FeedProvider extends ChangeNotifier {
 
   void retry() => _subscribe();
 
-  /// Unfiltered results straight from the repository. The date filter and
-  /// sort are applied on top of this, so changing either does not need a new
-  /// database query.
   List<ItemPost> _raw = const [];
 
-  /// Rebuilds [posts] from [_raw] using the current date filter and sort.
   void _applyView({bool notify = true}) {
     var view = _raw;
 
@@ -116,9 +101,11 @@ class FeedProvider extends ChangeNotifier {
       view = List<ItemPost>.of(view);
     }
 
-    view.sort((a, b) => _newestFirst
-        ? b.createdAt.compareTo(a.createdAt)
-        : a.createdAt.compareTo(b.createdAt));
+    view.sort(
+      (a, b) => _newestFirst
+          ? b.createdAt.compareTo(a.createdAt)
+          : a.createdAt.compareTo(b.createdAt),
+    );
 
     _posts = view;
     if (notify) notifyListeners();
@@ -135,19 +122,19 @@ class FeedProvider extends ChangeNotifier {
     _sub = _postRepository
         .watchFeed(type: _type, category: _category, keywords: keywords)
         .listen(
-      (posts) {
-        _raw = posts;
-        _applyView(notify: false);
-        _isLoading = false;
-        _error = null;
-        notifyListeners();
-      },
-      onError: (Object e) {
-        _error = e.toString();
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+          (posts) {
+            _raw = posts;
+            _applyView(notify: false);
+            _isLoading = false;
+            _error = null;
+            notifyListeners();
+          },
+          onError: (Object e) {
+            _error = e.toString();
+            _isLoading = false;
+            notifyListeners();
+          },
+        );
   }
 
   @override

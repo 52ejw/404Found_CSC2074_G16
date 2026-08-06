@@ -8,16 +8,6 @@ import '../repositories/user_repository.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
-/// ViewModel for authentication (FR01). Owns auth state and the
-/// login/register/logout actions, and exposes loading + error so the auth
-/// screens stay dumb.
-///
-/// Depends on the [AuthRepository]/[UserRepository] *interfaces* (not the
-/// Firebase classes) so it can be unit-tested with fakes — see blueprint 5.2.
-///
-/// Note: the Provider/ViewModel layer is Frontend Developer 2's area in the
-/// responsibility matrix; this implementation is the agreed contract the feed
-/// and auth screens code against, and can be extended by FE2.
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
   final UserRepository _userRepository;

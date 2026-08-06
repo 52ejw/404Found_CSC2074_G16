@@ -9,8 +9,6 @@ import '../../providers/auth_provider.dart';
 import 'register_screen.dart';
 import 'widgets/auth_scaffold.dart';
 
-/// Login screen (FR01). On success the auth gate swaps to the main shell, so
-/// this screen never navigates on success itself.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -50,9 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthProvider>();
     final ok = await auth.sendPasswordReset(email);
     if (!mounted) return;
-    _showMessage(ok
-        ? 'Password reset email sent to $email.'
-        : auth.error ?? 'Could not send the reset email.');
+    _showMessage(
+      ok
+          ? 'Password reset email sent to $email.'
+          : auth.error ?? 'Could not send the reset email.',
+    );
   }
 
   void _showMessage(String text) {
@@ -103,8 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 24,
                   child: Checkbox(
                     value: _rememberMe,
-                    onChanged: (v) =>
-                        setState(() => _rememberMe = v ?? false),
+                    onChanged: (v) => setState(() => _rememberMe = v ?? false),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -134,18 +133,22 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Don't have an account?",
-                    style: theme.textTheme.bodySmall),
+                Text(
+                  "Don't have an account?",
+                  style: theme.textTheme.bodySmall,
+                ),
                 TextButton(
                   onPressed: auth.isSubmitting
                       ? null
                       : () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterScreen(),
-                            ),
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
                           ),
-                  child: const Text('Sign up',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                  child: const Text(
+                    'Sign up',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),

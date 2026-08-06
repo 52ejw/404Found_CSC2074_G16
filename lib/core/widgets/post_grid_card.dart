@@ -4,10 +4,6 @@ import '../../app/theme.dart';
 import '../../models/item_post.dart';
 import 'type_badge.dart';
 
-/// Image-forward card for the feed's grid layout (Xiaohongshu-style) — a
-/// 2-column alternative to [PostCard]'s list row: image on top, details
-/// below. Reuses the same design tokens as [PostCard] so both layouts read
-/// as one system.
 class PostGridCard extends StatelessWidget {
   final ItemPost post;
   final VoidCallback? onTap;
@@ -58,14 +54,18 @@ class PostGridCard extends StatelessWidget {
                       post.itemName.isEmpty ? 'Untitled item' : post.itemName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _meta(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
                     ),
                   ],
                 ),
@@ -89,9 +89,9 @@ class PostGridCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: AppColors.placeholder,
-        child: const Icon(Icons.image_outlined, color: Colors.white, size: 28),
-      );
+    color: AppColors.placeholder,
+    child: const Icon(Icons.image_outlined, color: Colors.white, size: 28),
+  );
 
   String _meta() {
     final parts = <String>[];

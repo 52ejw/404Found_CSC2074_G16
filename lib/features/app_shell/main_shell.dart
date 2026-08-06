@@ -18,13 +18,6 @@ import '../posts/post_form_screen.dart';
 import '../profile/profile_screen.dart';
 import 'app_drawer.dart';
 
-/// Main app shell with RedNote-style layout (blueprint 4.1).
-///
-/// Top bar: Hamburger menu | Title/Tabs | Search icon
-/// Bottom nav: Home | Matches | Create Post (large center +) | Messages | Profile
-///
-/// Frontend Developer 1 owns the shell + Feed tab. Frontend Developer 2's
-/// post, match/claim, chat and profile flows are hosted by the other tabs.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -82,11 +75,11 @@ class _MainShellState extends State<MainShell> {
     ),
     CoachMark(
       key: _createKey,
-          circle: true,
-          title: 'Post an item',
-          body:
-              'Lost or found something? Add a category, description and where it '
-              'happened — it appears in the feed straight away.',
+      circle: true,
+      title: 'Post an item',
+      body:
+          'Lost or found something? Add a category, description and where it '
+          'happened — it appears in the feed straight away.',
     ),
     CoachMark(
       key: _matchesKey,
@@ -125,8 +118,6 @@ class _MainShellState extends State<MainShell> {
     context.read<FeedProvider>().setType(type);
   }
 
-  /// Shows an in-app banner for a newly received message, with a shortcut
-  /// straight to the Messages tab (FR18).
   void _showMessageAlert(ChatProvider chat, Conversation conversation) {
     final sender = chat.partnerName(conversation);
     final preview = conversation.lastMessage.trim();
@@ -147,7 +138,11 @@ class _MainShellState extends State<MainShell> {
               const CircleAvatar(
                 radius: 15,
                 backgroundColor: AppColors.accent,
-                child: Icon(Icons.chat_bubble, size: 15, color: AppColors.primaryDark),
+                child: Icon(
+                  Icons.chat_bubble,
+                  size: 15,
+                  color: AppColors.primaryDark,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -192,15 +187,12 @@ class _MainShellState extends State<MainShell> {
     final suggestedMatches = context.watch<MatchesProvider>().suggestedCount;
     final chat = context.watch<ChatProvider>();
     final unreadMessages = chat.unreadCount;
-
-    // Pop an alert for a message that arrived while the app was open. Done
-    // after the frame so a SnackBar is never shown during a build.
     final alert = chat.pendingAlert;
     if (alert != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         chat.consumeAlert();
-        if (_index == 3) return;          // already on Messages, no need to shout
+        if (_index == 3) return; // already on Messages, no need to shout
         _showMessageAlert(chat, alert);
       });
     }
@@ -212,9 +204,6 @@ class _MainShellState extends State<MainShell> {
       const ConversationsScreen(),
       const ProfileScreen(),
     ];
-
-    // Only the Home tab uses the shell's top bar; the other tabs bring their
-    // own AppBar so the header always matches the content.
     final showShellAppBar = _index == 0;
 
     final shell = Scaffold(
@@ -280,7 +269,10 @@ class _MainShellState extends State<MainShell> {
         shadowColor: Colors.black26,
         child: SafeArea(
           top: false,
-          minimum: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+          minimum: const EdgeInsets.only(
+            top: AppSpacing.sm,
+            bottom: AppSpacing.xs,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -366,9 +358,9 @@ class _NotificationBell extends StatelessWidget {
         isLabelVisible: unread > 0,
         child: const Icon(Icons.notifications_outlined),
       ),
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-      ),
+      onPressed: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
     );
   }
 }
@@ -476,7 +468,9 @@ class _BottomNavItem extends StatelessWidget {
                   isLabelVisible: badgeCount > 0,
                   child: Icon(
                     icon,
-                    color: isSelected ? AppColors.primary : theme.colorScheme.outline,
+                    color: isSelected
+                        ? AppColors.primary
+                        : theme.colorScheme.outline,
                     size: 24,
                   ),
                 ),
@@ -484,7 +478,9 @@ class _BottomNavItem extends StatelessWidget {
                 Text(
                   label,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: isSelected ? AppColors.primary : theme.colorScheme.outline,
+                    color: isSelected
+                        ? AppColors.primary
+                        : theme.colorScheme.outline,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),

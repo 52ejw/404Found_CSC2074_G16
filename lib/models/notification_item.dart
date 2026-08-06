@@ -4,8 +4,7 @@ import '../core/utils/firestore_converters.dart';
 import 'enums.dart';
 
 /// Corresponds to a document in the `notifications/{notificationId}`
-/// collection. [relatedEntityId] points at the match/conversation/claim
-/// that triggered the notification so tapping it can deep-link there.
+/// collection.
 class NotificationItem {
   final String id;
   final String userId;
@@ -31,7 +30,11 @@ class NotificationItem {
     return NotificationItem(
       id: id,
       userId: map['userId'] as String? ?? '',
-      type: enumFromName(NotificationType.values, map['type'] as String?, NotificationType.message),
+      type: enumFromName(
+        NotificationType.values,
+        map['type'] as String?,
+        NotificationType.message,
+      ),
       title: map['title'] as String? ?? '',
       body: map['body'] as String? ?? '',
       relatedEntityId: map['relatedEntityId'] as String? ?? '',
@@ -40,7 +43,9 @@ class NotificationItem {
     );
   }
 
-  factory NotificationItem.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory NotificationItem.fromDocument(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     return NotificationItem.fromMap(doc.id, doc.data() ?? const {});
   }
 

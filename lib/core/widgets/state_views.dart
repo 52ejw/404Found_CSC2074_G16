@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 
-/// Centred loading spinner with an optional caption (blueprint 9.2).
 class LoadingView extends StatelessWidget {
   final String? message;
   const LoadingView({super.key, this.message});
@@ -28,7 +27,6 @@ class LoadingView extends StatelessWidget {
   }
 }
 
-/// Friendly empty state — an invitation, not an apology.
 class EmptyView extends StatelessWidget {
   final IconData icon;
   final String title;

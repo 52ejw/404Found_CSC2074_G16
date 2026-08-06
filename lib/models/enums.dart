@@ -1,8 +1,4 @@
 /// Shared enums used across models, repositories and providers.
-///
-/// Storing enums as their [name] string in Firestore (rather than an index)
-/// keeps documents readable and safe to reorder in code without corrupting
-/// existing data.
 library;
 
 enum UserRole { student, staff, admin }

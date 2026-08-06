@@ -60,27 +60,15 @@ class ChatProvider extends ChangeNotifier {
   String? _messagesError;
   String? get messagesError => _messagesError;
 
-  /// Total unread messages across every conversation, read from each
-  /// conversation's `unreadCounts` map. Drives the red badge on the Messages
-  /// tab (FR18 in-app notifications).
   int _unreadCount = 0;
   int get unreadCount => _unreadCount;
   bool get hasUnread => _unreadCount > 0;
 
-  /// Set when the unread total rises while the app is open, so the shell can
-  /// pop an alert for the newest conversation. Cleared by [consumeAlert] so
-  /// the same message never pops twice.
   Conversation? _pendingAlert;
   Conversation? get pendingAlert => _pendingAlert;
 
   void consumeAlert() => _pendingAlert = null;
 
-  /// Recomputes the unread total and decides whether a new message just
-  /// arrived. A falling total means the user opened a chat and messages were
-  /// marked read, which must not trigger an alert.
-  /// False until the first snapshot has been counted, so opening the app with
-  /// messages already waiting fills the badge without popping an alert for
-  /// something the user has seen before.
   bool _unreadPrimed = false;
 
   void _refreshUnread(List<Conversation> conversations) {

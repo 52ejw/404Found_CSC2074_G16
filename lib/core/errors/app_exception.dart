@@ -1,8 +1,3 @@
-/// Base type for exceptions surfaced by the service/repository layers.
-///
-/// Providers should catch this (not raw Firebase exceptions) so the UI layer
-/// stays decoupled from which backend produced the error, per the
-/// architecture's separation-of-concerns goal.
 sealed class AppException implements Exception {
   final String message;
   const AppException(this.message);

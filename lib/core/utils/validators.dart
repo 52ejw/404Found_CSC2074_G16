@@ -1,7 +1,3 @@
-/// Form-field validators shared across features (register/login, create
-/// post, claim forms, etc). Each returns a user-facing error string, or
-/// `null` when the value is valid — matching Flutter's `FormField.validator`
-/// signature so these can be passed straight through.
 class Validators {
   Validators._();
 
@@ -12,10 +8,6 @@ class Validators {
     return null;
   }
 
-  /// Only Sunway student mail is accepted, so every account belongs to a real
-  /// member of the campus community (NFR04/NFR05). This is only the first of
-  /// two checks — Firestore security rules reject non-campus accounts on the
-  /// server as well, because a client-side check alone can be bypassed.
   static const String campusEmailDomain = '@imail.sunway.edu.my';
 
   static String? email(String? value) {

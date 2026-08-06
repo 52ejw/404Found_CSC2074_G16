@@ -10,9 +10,6 @@ import '../profile/help_screen.dart';
 import '../profile/profile_screen.dart';
 import '../profile/settings_screen.dart';
 
-/// Side menu opened from the hamburger icon in [MainShell]'s top bar.
-/// Gives quick access to the user's own activity, saved items and settings,
-/// plus sign-out. Destinations owned by other developers are stubbed for now.
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 

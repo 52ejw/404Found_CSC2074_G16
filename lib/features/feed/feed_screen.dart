@@ -9,9 +9,6 @@ import '../../models/item_post.dart';
 import '../../providers/feed_provider.dart';
 import '../posts/post_details_screen.dart';
 
-/// Home / community feed (FR05). Header + promo banner + Lost/Found filter
-/// chips + a live list/grid of posts bound to [FeedProvider]. Layout (list
-/// vs. grid) is a local UI preference, not part of feed state.
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key, this.onCreatePost});
 
@@ -34,17 +31,30 @@ class _FeedScreenState extends State<FeedScreen> {
         children: [
           _PromoBanner(onCreatePost: widget.onCreatePost),
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              0,
+            ),
             child: Align(
               alignment: Alignment.centerRight,
               child: IconButton(
                 onPressed: () => setState(() => _isGridView = !_isGridView),
-                icon: Icon(_isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined),
-                tooltip: _isGridView ? 'Switch to list view' : 'Switch to grid view',
+                icon: Icon(
+                  _isGridView
+                      ? Icons.view_list_outlined
+                      : Icons.grid_view_outlined,
+                ),
+                tooltip: _isGridView
+                    ? 'Switch to list view'
+                    : 'Switch to grid view',
               ),
             ),
           ),
-          Expanded(child: _FeedBody(feed: feed, isGridView: _isGridView)),
+          Expanded(
+            child: _FeedBody(feed: feed, isGridView: _isGridView),
+          ),
         ],
       ),
     );
@@ -154,9 +164,6 @@ class _FeedBody extends StatelessWidget {
     );
   }
 
-  // The shell's bottom nav floats over the body (extendBody: true), so the
-  // last row needs enough bottom padding to scroll clear of it instead of
-  // sitting stuck underneath with no more room left to scroll.
   double _bottomClearance(BuildContext context) =>
       AppSpacing.xl + 64 + MediaQuery.paddingOf(context).bottom;
 
@@ -194,7 +201,10 @@ class _FeedBody extends StatelessWidget {
       itemCount: feed.posts.length,
       itemBuilder: (context, i) {
         final post = feed.posts[i];
-        return PostGridCard(post: post, onTap: () => _openDetails(context, post));
+        return PostGridCard(
+          post: post,
+          onTap: () => _openDetails(context, post),
+        );
       },
     );
   }

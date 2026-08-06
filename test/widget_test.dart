@@ -29,10 +29,6 @@ import 'package:found404/services/firestore_service.dart';
 import 'package:found404/services/matching_service.dart';
 import 'package:found404/services/storage_service.dart';
 
-/// Avoids touching real Firebase Storage/Firestore — PostProvider's
-/// StorageService and MatchingService both eagerly read Firebase instances,
-/// which throw without Firebase.initializeApp() having run in the test
-/// binding.
 class _MockFirebaseStorage extends Mock implements FirebaseStorage {}
 
 class _MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
@@ -269,16 +265,15 @@ void main() {
     WidgetTester tester,
   ) async {
     final repository = _FakePostRepository();
-    final provider =
-        PostProvider(
-          postRepository: repository,
-          storageService: StorageService(storage: _MockFirebaseStorage()),
-          matchingService: MatchingService(
-            postRepository: repository,
-            notificationRepository: _FakeNotificationRepository(),
-            firestore: FirestoreService(firestore: _MockFirebaseFirestore()),
-          ),
-        )..setIdentity(userId: 'u1', ownerName: 'Tess');
+    final provider = PostProvider(
+      postRepository: repository,
+      storageService: StorageService(storage: _MockFirebaseStorage()),
+      matchingService: MatchingService(
+        postRepository: repository,
+        notificationRepository: _FakeNotificationRepository(),
+        firestore: FirestoreService(firestore: _MockFirebaseFirestore()),
+      ),
+    )..setIdentity(userId: 'u1', ownerName: 'Tess');
 
     await tester.pumpWidget(
       ChangeNotifierProvider.value(

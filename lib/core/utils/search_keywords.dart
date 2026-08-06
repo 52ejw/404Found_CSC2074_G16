@@ -1,9 +1,3 @@
-/// Builds the lowercased token list stored in [ItemPost.searchKeywords].
-///
-/// Firestore has no native full-text search, so FR06 (search by item name,
-/// category or location) is implemented client-side against this
-/// precomputed token list using `array-contains-any`, per blueprint 7.4's
-/// "normalise text" step reused here for search rather than just matching.
 List<String> buildSearchKeywords({
   required String itemName,
   required String category,

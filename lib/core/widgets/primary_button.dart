@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Full-width primary action button with a built-in loading spinner.
-///
-/// Used for Log in / Register / submit actions. Pass [isLoading] while the
-/// backing provider is working so the button disables and shows progress
-/// (blueprint 9.2 — loading states).
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;

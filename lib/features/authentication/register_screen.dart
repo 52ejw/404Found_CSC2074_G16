@@ -8,8 +8,6 @@ import '../../core/widgets/primary_button.dart';
 import '../../providers/auth_provider.dart';
 import 'widgets/auth_scaffold.dart';
 
-/// Registration screen (FR01). On success the account is signed in and the
-/// auth gate replaces the tree with the main shell, so we simply pop back.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -163,14 +161,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Already have an account?',
-                    style: theme.textTheme.bodySmall),
+                Text(
+                  'Already have an account?',
+                  style: theme.textTheme.bodySmall,
+                ),
                 TextButton(
                   onPressed: auth.isSubmitting
                       ? null
                       : () => Navigator.of(context).pop(),
-                  child: const Text('Sign in',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Sign in',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),

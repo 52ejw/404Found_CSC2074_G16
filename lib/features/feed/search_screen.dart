@@ -9,9 +9,6 @@ import '../../models/enums.dart';
 import '../../providers/feed_provider.dart';
 import '../posts/post_details_screen.dart';
 
-/// Advanced search + filter screen (RedNote/Trip style).
-/// Vertical collapsible filter panels: Type, Category, Date range, Sort.
-/// Results displayed below filters (FR06).
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -25,7 +22,6 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _expandCategory = false;
   bool _expandDate = false;
   bool _expandSort = false;
-
 
   @override
   void initState() {
@@ -192,14 +188,12 @@ class _SearchScreenState extends State<SearchScreen> {
                           FilterChip(
                             label: const Text('Newest'),
                             selected: feed.newestFirst,
-                            onSelected: (_) =>
-                                feed.setSort(newestFirst: true),
+                            onSelected: (_) => feed.setSort(newestFirst: true),
                           ),
                           FilterChip(
                             label: const Text('Oldest'),
                             selected: !feed.newestFirst,
-                            onSelected: (_) =>
-                                feed.setSort(newestFirst: false),
+                            onSelected: (_) => feed.setSort(newestFirst: false),
                           ),
                         ],
                       ),

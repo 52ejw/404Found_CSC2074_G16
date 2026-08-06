@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Themed text field with an optional leading icon and validator.
-///
-/// Thin wrapper over [TextFormField] so every form (login, register, create
-/// post, claim) looks consistent and plugs straight into `Validators`.
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String label;

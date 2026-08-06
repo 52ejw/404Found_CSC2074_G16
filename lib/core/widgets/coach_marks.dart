@@ -5,13 +5,10 @@ import '../../app/theme.dart';
 /// One step of the first-run walkthrough: the widget to highlight plus the
 /// copy that explains it.
 class CoachMark {
-  /// Attach this key to the widget the step points at.
   final GlobalKey key;
   final String title;
   final String body;
 
-  /// Draws the spotlight as a circle instead of a rounded rectangle — use for
-  /// icon buttons and the round create-post button.
   final bool circle;
 
   const CoachMark({
@@ -22,12 +19,6 @@ class CoachMark {
   });
 }
 
-/// Step-by-step walkthrough shown over the app on first launch.
-///
-/// Dims the screen, cuts a spotlight around the current target and shows a
-/// card explaining it. Targets are located at paint time from their
-/// [GlobalKey], so the overlay needs no knowledge of the layout and keeps
-/// working if the shell is rearranged.
 class CoachMarkOverlay extends StatefulWidget {
   final List<CoachMark> steps;
   final VoidCallback onFinish;
@@ -44,11 +35,6 @@ class CoachMarkOverlay extends StatefulWidget {
 
 class _CoachMarkOverlayState extends State<CoachMarkOverlay> {
   int _index = 0;
-
-  /// Bounds of the current target **expressed in this overlay's coordinate
-  /// space**. Going through the overlay's own render box (rather than raw
-  /// global coordinates) keeps the spotlight aligned even when an ancestor
-  /// applies a transform — DevicePreview scales the whole app, for example.
   Rect? _targetRect() {
     final ctx = widget.steps[_index].key.currentContext;
     if (ctx == null) return null;
@@ -61,8 +47,6 @@ class _CoachMarkOverlayState extends State<CoachMarkOverlay> {
     return topLeft & target.size;
   }
 
-  /// Re-measures once the first frame is painted, so step 1 is positioned
-  /// correctly even though the overlay builds in the same frame as its targets.
   @override
   void initState() {
     super.initState();
@@ -85,9 +69,11 @@ class _CoachMarkOverlayState extends State<CoachMarkOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return _buildOverlay(context, constraints.biggest);
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return _buildOverlay(context, constraints.biggest);
+      },
+    );
   }
 
   Widget _buildOverlay(BuildContext context, Size size) {
@@ -97,7 +83,10 @@ class _CoachMarkOverlayState extends State<CoachMarkOverlay> {
     // Padded spotlight so the highlight breathes around the target.
     final spot = rect == null
         ? Rect.fromCenter(
-            center: Offset(size.width / 2, size.height / 2), width: 0, height: 0)
+            center: Offset(size.width / 2, size.height / 2),
+            width: 0,
+            height: 0,
+          )
         : rect.inflate(8);
 
     // Put the card on whichever side has more room.
@@ -123,9 +112,7 @@ class _CoachMarkOverlayState extends State<CoachMarkOverlay> {
             left: AppSpacing.lg,
             right: AppSpacing.lg,
             top: showBelow ? spot.bottom + AppSpacing.lg : null,
-            bottom: showBelow
-                ? null
-                : size.height - spot.top + AppSpacing.lg,
+            bottom: showBelow ? null : size.height - spot.top + AppSpacing.lg,
             child: _CoachCard(
               step: step,
               index: _index,
@@ -172,7 +159,11 @@ class _CoachCard extends StatelessWidget {
           left: BorderSide(color: AppColors.accent, width: 5),
         ),
         boxShadow: const [
-          BoxShadow(color: Color(0x66000000), blurRadius: 28, offset: Offset(0, 10)),
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 28,
+            offset: Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
@@ -204,8 +195,9 @@ class _CoachCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Tap anywhere to continue',
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: theme.colorScheme.outline),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -266,26 +258,19 @@ class _SpotlightPainter extends CustomPainter {
         Rect.fromCircle(center: spot.center, radius: spot.longestSide / 2),
       );
     } else {
-      hole.addRRect(
-        RRect.fromRectAndRadius(spot, const Radius.circular(12)),
-      );
+      hole.addRRect(RRect.fromRectAndRadius(spot, const Radius.circular(12)));
     }
 
-    // Dim the surroundings, but keep them readable so the user still has
-    // context for where the highlighted control sits.
     canvas.drawPath(
       Path.combine(PathOperation.difference, scrim, hole),
       Paint()..color = const Color(0xFF06132B).withValues(alpha: 0.72),
     );
 
-    // Lift the target itself: a pale wash inside the hole makes the widget
-    // read clearly whether the app is in light or dark theme.
     canvas.drawPath(
       hole,
       Paint()..color = Colors.white.withValues(alpha: 0.14),
     );
 
-    // Wide soft gold glow radiating from the spotlight
     canvas.drawPath(
       hole,
       Paint()
@@ -295,7 +280,6 @@ class _SpotlightPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
     );
 
-    // Crisp gold ring around the spotlight
     canvas.drawPath(
       hole,
       Paint()

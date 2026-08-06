@@ -4,10 +4,6 @@ import '../../app/constants.dart';
 import '../../app/theme.dart';
 import '../../core/widgets/app_logo.dart';
 
-/// Shown while [AuthProvider] is still resolving the initial auth state
-/// (blueprint 4.2 — Splash checks authentication and routes on).
-///
-/// Uses the Sunway navy backdrop so the very first frame is on brand.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 

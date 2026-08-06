@@ -1,13 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Thin wrapper around [FirebaseAuth]. Translates Firebase's
-/// [FirebaseAuthException] codes into plain messages here so the
-/// repository/provider layers above never import `firebase_auth` directly,
-/// per the MVVM + Repository separation in blueprint section 5.1.
 class FirebaseAuthService {
   final FirebaseAuth _auth;
 
-  FirebaseAuthService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
+  FirebaseAuthService({FirebaseAuth? auth})
+    : _auth = auth ?? FirebaseAuth.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -15,7 +12,10 @@ class FirebaseAuthService {
     return _auth.authStateChanges().map((user) => user?.uid);
   }
 
-  Future<String> register({required String email, required String password}) async {
+  Future<String> register({
+    required String email,
+    required String password,
+  }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -29,7 +29,10 @@ class FirebaseAuthService {
     }
   }
 
-  Future<String> login({required String email, required String password}) async {
+  Future<String> login({
+    required String email,
+    required String password,
+  }) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),

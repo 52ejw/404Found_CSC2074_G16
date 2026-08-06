@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../models/enums.dart';
 
-/// Small pill showing whether a post is Lost (yellow) or Found (blue),
-/// per the design system.
 class TypeBadge extends StatelessWidget {
   final PostType type;
   const TypeBadge({super.key, required this.type});
